@@ -28,6 +28,14 @@ class ARCompactInstrInfo : public ARCompactGenInstrInfo {
 public:
   explicit ARCompactInstrInfo(ARCompactSubtarget &ST);
 
+  /// Inserts instructions to copy a pair of physical registers, moving the
+  /// contents of SrcReg to DestReg. If KillSrc is set, the source register is
+  /// no longer needed.
+  virtual void copyPhysReg(MachineBasicBlock &MBB,
+                           MachineBasicBlock::iterator I, DebugLoc DL,
+                           unsigned DestReg, unsigned SrcReg,
+                           bool KillSrc) const;
+
   /// Returns the RegisterInfo for the Target. 
   virtual const ARCompactRegisterInfo &getRegisterInfo() const {
     return RI;

@@ -28,6 +28,13 @@
 
 using namespace llvm;
 
+void ARCompactInstrInfo::copyPhysReg(MachineBasicBlock &MBB, 
+    MachineBasicBlock::iterator I, DebugLoc DL, unsigned int DestReg,
+    unsigned int SrcReg, bool KillSrc) const {
+  BuildMI(MBB, I, DL, get(ARC::MOVrr), DestReg)
+      .addReg(SrcReg, getKillRegState(KillSrc));
+}
+
 ARCompactInstrInfo::ARCompactInstrInfo(ARCompactSubtarget &ST)
   : ARCompactGenInstrInfo(),
     RI(ST, *this), Subtarget(ST) {
