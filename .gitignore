@@ -1,0 +1,45 @@
+# GLOBAL
+# Global ignores for general file types.
+
+# Ignore all tablegen generated files.
+*.inc
+
+# LLVM
+# To avoid capturing the whole of LLVM in the git repo, carefully
+# ignore everything that isn't necessary.
+
+# This generally works on a structure of:
+#   * Ignore everything in folder X
+#   * Unignore everything in subfolder X/Y
+#   * Recurse into Y.
+
+llvm/*
+
+!llvm/.configure
+
+!llvm/lib
+llvm/lib/*
+
+# The ARCompact Target folder.
+!llvm/lib/Target
+llvm/lib/Target/*
+
+!llvm/lib/Target/ARCompact/
+
+# Triple.cpp
+!llvm/lib/Support
+llvm/lib/Support/*
+
+!llvm/lib/Support/Triple.cpp
+
+# Triple.h
+!llvm/include
+llvm/include/*
+
+!llvm/include/llvm
+llvm/include/llvm/*
+
+!llvm/include/llvm/ADT
+llvm/include/llvm/ADT/*
+
+!llvm/include/llvm/ADT/Triple.h
