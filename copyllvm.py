@@ -39,10 +39,11 @@ def main(llvm_location):
       print "WARNING: Unable to save file: '" + file + "'"
 
   # Now pull in llvm. Luckily we can use git to backup if things go really wrong. lol
-  command = "mv -rf " + llvm_location + " llvm"
+  command = "mv -f " + llvm_location + " llvm"
   status, output = commands.getstatusoutput(command)
   if status != 0:
     print "ERROR: Unable to copy in the LLVM location."
+    print
     print output
     return
 
