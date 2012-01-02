@@ -9,53 +9,69 @@ files_to_save = ["llvm/configure", "llvm/include/llvm/ADT/Triple.h",
 
 def main(llvm_location):
   if not os.path.isdir(llvm_location):
-    print "LLVMERROR"
+    print "Unable to find given directory: '" + llvm_location + "'"
     return
 
   # Check that there are no staged/unadded files (for tidyness.)
   status, output = commands.getstatusoutput("git status")
   if status != 0:
-    print "ERROR"
+    print "ERROR: git-status returned with an error."
+    print
+    print output 
     return
 
   if output.find("On branch master\nnothing to commit") < 0:
-    print "ERROR2"
+    print "ERROR: There are un-committed changes on your branch."
+    print
+    print output
     return
 
   # Backup the saved files.
   for file in files_to_save:
     if not os.path.isfile(file):
-      print "WARNING"
+      print "WARNING: Unable to save file: '" + file + "'"
       continue
 
     command = "cp " + file + " " + file + ".bak"
     status, output = commands.getstatusoutput(command)
 
     if status != 0:
-      print "WARNING"
+      print "WARNING: Unable to save file: '" + file + "'"
 
   # Now pull in llvm. Luckily we can use git to backup if things go really wrong. lol
   command = "mv -rf " + llvm_location + " llvm"
-  print command
+  status, output = commands.getstatusoutput(command)
+  if status != 0:
+    print "ERROR: Unable to copy in the LLVM location."
+    print output
+    return
 
   # Move back the saved files.
   for file in files_to_save:
     command = "mv " + file + ".bak " + file
     status, output = commands.getstatusoutput(command)
     if status != 0:
-      print "WARNING"
+      print "WARNING: Unable to restore saved file: '" + file + "'"
 
   # Finally, check with git that nothing unexpected has changed.
   status, output = commands.getstatusoutput("git status")
   if status != 0:
-    print "ERROR"
+    print "ERROR: git-status returned with an error."
+    print
+    print output 
     return
 
   if output.find("On branch master\nnothing to commit") < 0:
-    print "WARNING"
+    print "WARNING: Git has detected changes. Something may have gone wrong;" + \
+          "consider reverting!"
+    print
+    print output
+  else:
+    print ""
+    print "LLVM copied successfully. Run makellvm.sh to build it."
 
 if __name__ == "__main__":
   if len(sys.argv) == 2:
     main(sys.argv[1])
   else:
-    print "ERROR3"
+    print "Usage: python copyllvm.py llvm_location"
