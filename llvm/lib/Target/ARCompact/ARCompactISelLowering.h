@@ -19,9 +19,21 @@
 #include "ARCompact.h"
 
 namespace llvm {
+  namespace ARCISD {
+    enum {
+      // Start at the end of the built-in ops.
+      FIRST_NUMBER = ISD::BUILTIN_OP_END,
+
+      // Return with a flag operand.
+      RET_FLAG
+    };
+  } // end namespace ARCISD
+
   class ARCompactTargetLowering : public TargetLowering {
   public:
     ARCompactTargetLowering(TargetMachine &TM);
+
+    virtual const char *getTargetNodeName(unsigned Opcode) const;
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
@@ -34,6 +46,14 @@ namespace llvm {
         CallingConv::ID CallConv, bool isVarArg,
         const SmallVectorImpl<ISD::InputArg> &Ins, DebugLoc dl, 
         SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const;
+
+    /// This hook must be implemented to lower outgoing return values, 
+    /// described by the Outs array, into the specified DAG. The implementation
+    /// should return the resulting token chain value.
+    virtual SDValue LowerReturn(SDValue Chain, CallingConv::ID CallConv,
+        bool isVarArg, const SmallVectorImpl<ISD::OutputArg> &Outs,
+        const SmallVectorImpl<SDValue> &OutVals, DebugLoc dl, SelectionDAG &DAG)
+        const;
   };
 } // end namespace llvm
 

@@ -39,6 +39,13 @@ ARCompactTargetLowering::ARCompactTargetLowering(TargetMachine &TM)
   computeRegisterProperties();
 }
 
+const char* ARCompactTargetLowering::getTargetNodeName(unsigned Opcode) const {
+  switch (Opcode) {
+    case ARCISD::RET_FLAG:   return "ARCISD::RET_FLAG";
+    default:                 return 0;
+  }
+}
+
 SDValue ARCompactTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) 
     const {
   switch (Op.getOpcode()) {
@@ -106,4 +113,56 @@ SDValue ARCompactTargetLowering::LowerFormalArguments(SDValue Chain,
   }
 
   return Chain;
+}
+
+SDValue ARCompactTargetLowering::LowerReturn(SDValue Chain, 
+    CallingConv::ID CallConv, bool isVarArg, 
+    const SmallVectorImpl<ISD::OutputArg> &Outs, 
+    const SmallVectorImpl<SDValue> &OutVals, DebugLoc dl, SelectionDAG &DAG) 
+    const {
+  MachineFunction &MF = DAG.getMachineFunction();
+
+  // CCValAssign - represent the assignment of the return value to locations.
+  SmallVector<CCValAssign, 16> RVLocs;
+
+  // CCState - Info about the registers and stack slot.
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
+     DAG.getTarget(), RVLocs, *DAG.getContext());
+
+  // Analize return values.
+  CCInfo.AnalyzeReturn(Outs, RetCC_ARCompact32);
+
+  // If this is the first return lowered for this function, add the regs to the
+  // liveout set for the function.
+  if (MF.getRegInfo().liveout_empty()) {
+    for (unsigned i = 0; i != RVLocs.size(); ++i)
+      if (RVLocs[i].isRegLoc()) { 
+        MF.getRegInfo().addLiveOut(RVLocs[i].getLocReg());
+      }
+  }
+
+  SDValue Flag;
+
+  // Copy the result values into the output registers.
+  for (unsigned i = 0; i != RVLocs.size(); ++i) {
+    CCValAssign &VA = RVLocs[i];
+    assert(VA.isRegLoc() && "Can only return in registers!");
+
+    Chain = DAG.getCopyToReg(Chain, dl, VA.getLocReg(), OutVals[i], Flag);
+
+    // Guarantee that all emitted copies are stuck together with flags.
+    Flag = Chain.getValue(1);
+  }
+
+  // TODO: Check this value.
+  unsigned int RetAddrOffset = 8; // Call Instruction + Delay Slot
+  SDValue RetAddrOffsetNode = DAG.getConstant(RetAddrOffset, MVT::i32);
+
+  if (Flag.getNode()) {
+    return DAG.getNode(ARCISD::RET_FLAG, dl, MVT::Other, Chain,
+        RetAddrOffsetNode, Flag);
+  }
+
+  return DAG.getNode(ARCISD::RET_FLAG, dl, MVT::Other, Chain,
+      RetAddrOffsetNode);
 }
