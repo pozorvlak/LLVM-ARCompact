@@ -4,9 +4,6 @@ import commands
 import os.path
 import sys
 
-files_to_save = ["llvm/configure", "llvm/include/llvm/ADT/Triple.h",
-                 "llvm/lib/Support/Triple.cpp"]
-
 def main(llvm_location):
   if not os.path.isdir(llvm_location):
     print "Unable to find given directory: '" + llvm_location + "'"
@@ -26,33 +23,14 @@ def main(llvm_location):
     print output
     return
 
-  # Backup the saved files.
-  for file in files_to_save:
-    if not os.path.isfile(file):
-      print "WARNING: Unable to save file: '" + file + "'"
-      continue
-
-    command = "cp " + file + " " + file + ".bak"
-    status, output = commands.getstatusoutput(command)
-
-    if status != 0:
-      print "WARNING: Unable to save file: '" + file + "'"
-
   # Now pull in llvm. Luckily we can use git to backup if things go really wrong. lol
-  command = "mv -f " + llvm_location + "/* llvm"
+  command = "rsync -rE --ignore-existing --remove-source-files " + llvm_location + "/* llvm/"
   status, output = commands.getstatusoutput(command)
   if status != 0:
     print "ERROR: Unable to copy in the LLVM location."
     print
     print output
     return
-
-  # Move back the saved files.
-  for file in files_to_save:
-    command = "mv " + file + ".bak " + file
-    status, output = commands.getstatusoutput(command)
-    if status != 0:
-      print "WARNING: Unable to restore saved file: '" + file + "'"
 
   # Finally, check with git that nothing unexpected has changed.
   status, output = commands.getstatusoutput("git status")
