@@ -16,10 +16,11 @@
 include "llvm/Target/Target.td"
 
 //===----------------------------------------------------------------------===//
-// Register File, Instruction Descriptions.
+// Register File, Calling Convention, Instruction Descriptions.
 //===----------------------------------------------------------------------===//
 
 include "ARCompactRegisterInfo.td"
+include "ARCompactCallingConv.td"
 include "ARCompactInstrInfo.td"
 
 def ARCompactInstrInfo : InstrInfo;

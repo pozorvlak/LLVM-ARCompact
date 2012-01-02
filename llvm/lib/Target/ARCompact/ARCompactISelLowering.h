@@ -25,6 +25,15 @@ namespace llvm {
 
     /// LowerOperation - Provide custom lowering hooks for some operations.
     virtual SDValue LowerOperation(SDValue Op, SelectionDAG &DAG) const;
+
+    /// This hook must be implemented to lower the incoming (formal) arguments,
+    /// described by the Ins array, into the specified DAG. The implementation
+    /// should fill in the InVals array with legal-type argument values, and
+    /// return the resulting token chain value.
+    virtual SDValue LowerFormalArguments(SDValue Chain, 
+        CallingConv::ID CallConv, bool isVarArg,
+        const SmallVectorImpl<ISD::InputArg> &Ins, DebugLoc dl, 
+        SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const;
   };
 } // end namespace llvm
 
