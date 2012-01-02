@@ -1,6 +1,9 @@
 # GLOBAL
 # Global ignores for general file types.
 
+# Ignore all swap files (usually Vim backups)
+*.swp
+
 # Ignore all tablegen generated files.
 *.inc
 
