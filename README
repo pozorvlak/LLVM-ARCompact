@@ -1,0 +1,17 @@
+Uses LLVM 3.0.
+
+Notes:
+
+To compile with clang --> bitcode
+
+  Clang/bin/clang -emit-llvm filename.c -c -o filename.bc
+
+
+To view the bitcode
+
+  llvm/Debug+Asserts/bin/llvm-dis < filename.bc
+
+
+To compile it to asm using the arcompact backend
+
+  llvm/Debug+Asserts/bin/llc -debug -march=arcompact -filetype=asm test.bc 2> debug
