@@ -24,7 +24,7 @@ def main(llvm_location):
     return
 
   # Now pull in llvm. Luckily we can use git to backup if things go really wrong. lol
-  command = "rsync -rE --ignore-existing --remove-source-files " + llvm_location + "/* llvm/"
+  command = "mv -n " + llvm_location + "/* llvm/"
   status, output = commands.getstatusoutput(command)
   if status != 0:
     print "ERROR: Unable to copy in the LLVM location."
