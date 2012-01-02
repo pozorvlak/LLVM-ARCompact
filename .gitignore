@@ -46,3 +46,11 @@ llvm/include/llvm/*
 llvm/include/llvm/ADT/*
 
 !llvm/include/llvm/ADT/Triple.h
+
+
+# BUILD
+# Only want to keep the make script.
+
+build/*
+# TODO: Replace with script.
+!build/.placeholder
