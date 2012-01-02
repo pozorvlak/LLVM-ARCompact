@@ -40,5 +40,6 @@ void ARCompactFrameLowering::emitEpilogue(MachineFunction &MF,
 }
 
 bool ARCompactFrameLowering::hasFP(const MachineFunction &MF) const {
-  return true;
+  return (DisableFramePointerElim(MF) ||
+      MF.getFrameInfo()->hasVarSizedObjects());
 }
