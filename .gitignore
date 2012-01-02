@@ -15,7 +15,7 @@
 
 llvm/*
 
-!llvm/.configure
+!llvm/configure
 
 !llvm/lib
 llvm/lib/*
