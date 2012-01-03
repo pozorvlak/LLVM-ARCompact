@@ -55,6 +55,14 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
 // General Instructions - Alphabetical Order.
 //
 
+// ADD - Page 180.
+//    Add two source operands together, and place the result in the destination
+//    register.
+
+def ADDrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, CPURegs:$src2),
+                   "add $dst,$src1,$src2",
+                   [(set CPURegs:$dst, (add CPURegs:$src1, CPURegs:$src2))]>;
+
 // MOV - Page 262.
 //    The contents of the source are moved into the destination register.
 
