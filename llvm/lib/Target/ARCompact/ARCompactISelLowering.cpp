@@ -37,6 +37,9 @@ ARCompactTargetLowering::ARCompactTargetLowering(TargetMachine &TM)
 
   // Compute the derived properties from the register classes.
   computeRegisterProperties();
+
+  // Do not have division, so int-division is expensive.
+  setIntDivIsCheap(false);
 }
 
 const char* ARCompactTargetLowering::getTargetNodeName(unsigned Opcode) const {
