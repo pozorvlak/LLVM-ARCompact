@@ -56,6 +56,25 @@ void ARCompactAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
   }
 }
 
+// Prints a memory operand, such as [r1,4].
+void ARCompactAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
+                                      raw_ostream &O, const char *Modifier) {
+  O << "[";
+  printOperand(MI, opNum, O);
+
+  if (MI->getNumOperands() > 1) {
+    MachineOperand MO = MI->getOperand(opNum + 1);
+    // Only print the second part of a two-operand memory address if it is
+    // non-zero; i.e. print [r1], not [r1,0].
+    if (MO.getType() != MachineOperand::MO_Immediate || MO.getImm() != 0) {
+      O << ",";
+      printOperand(MI, opNum + 1, O);
+    }
+  }
+
+  O << "]";
+}
+
 
 // Static initialization.
 extern "C" void LLVMInitializeARCompactAsmPrinter() { 

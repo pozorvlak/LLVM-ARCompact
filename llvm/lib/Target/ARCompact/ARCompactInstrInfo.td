@@ -32,8 +32,27 @@ def ARCretflag : SDNode<"ARCISD::RET_FLAG", SDTNone,
 // Patterns which match different immediate types.
 // TODO: Are long-immediates signed or unsigned?
 def uimm6 : PatLeaf<(imm), [{ return isUInt<6>(N->getZExtValue()); }]>;
+def simm9 : PatLeaf<(imm), [{ return isInt<9>(N->getSExtValue()); }]>;
 def simm12 : PatLeaf<(imm), [{ return isInt<12>(N->getSExtValue()); }]>;
 def limm32 : PatLeaf<(imm), [{ return isInt<32>(N->getSExtValue()); }]>;
+
+// Patterns which match addressing modes.
+def ADDRri : ComplexPattern<i32, 2, "SelectADDRri", [frameindex], []>;
+def ADDRli : ComplexPattern<i32, 1, "SelectADDRli", [frameindex], []>;
+
+//===----------------------------------------------------------------------===//
+// ARCompact Operand Definitions.
+//===----------------------------------------------------------------------===//
+
+// Memory addressing operands.
+def MEMri : Operand<i32> {  // Register + signed immediate.
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops CPURegs, simm9);
+}
+def MEMli : Operand<i32> {  // Long immediate.
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops limm32);
+}
 
 //===----------------------------------------------------------------------===//
 // ARCompact Instructions.
@@ -88,3 +107,25 @@ let isAsCheapAsAMove = 1 in {
                       "mov $dst,$imm",
                       [(set CPURegs:$dst, limm32:$imm)]>;
 }
+
+// ST - page 310.
+//    Stores the value stored in the source operand in the destination memory
+//    address. The source operand may either be a register or a long immediate
+//    value. The memory address may be given as a single long immediate, or
+//    as two operands whose values will be added together to get the address.
+//
+//    The suffixes given here refer to the whole instruction format - for
+//    example, rri means store a value from a register into an address given by
+//    a register + a signed 9-bit immediate.
+
+def STrri : Pseudo<(outs), (ins MEMri:$addr, CPURegs:$src),
+                  "st $src,$addr",
+                  [(store CPURegs:$src, ADDRri:$addr)]>;
+
+def STrli : Pseudo<(outs), (ins MEMli:$addr, CPURegs:$src),
+                  "st $src,$addr",
+                  [(store CPURegs:$src, ADDRli:$addr)]>;
+
+def STliri : Pseudo<(outs), (ins MEMri:$addr, i32imm:$src),
+                    "st $src,$addr",
+                    [(store limm32:$src, ADDRri:$addr)]>;
