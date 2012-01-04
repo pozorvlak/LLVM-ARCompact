@@ -39,6 +39,9 @@ def limm32 : PatLeaf<(imm), [{ return isInt<32>(N->getSExtValue()); }]>;
 // Patterns which match addressing modes.
 def ADDRri : ComplexPattern<i32, 2, "SelectADDRri", [frameindex], []>;
 def ADDRli : ComplexPattern<i32, 1, "SelectADDRli", [frameindex], []>;
+def ADDRrr : ComplexPattern<i32, 2, "SelectADDRrr", [frameindex], []>;
+def ADDRrli : ComplexPattern<i32, 2, "SelectADDRrli", [frameindex], []>;
+def ADDRlir : ComplexPattern<i32, 2, "SelectADDRlir", [frameindex], []>;
 
 //===----------------------------------------------------------------------===//
 // ARCompact Operand Definitions.
@@ -52,6 +55,18 @@ def MEMri : Operand<i32> {  // Register + signed immediate.
 def MEMli : Operand<i32> {  // Long immediate.
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops limm32);
+}
+def MEMrr : Operand<i32> {  // Register + register.
+  let PrintMethod = "printMemOperand";
+    let MIOperandInfo = (ops CPURegs, CPURegs);
+}
+def MEMrli : Operand<i32> {  // Register + long immediate.
+  let PrintMethod = "printMemOperand";
+    let MIOperandInfo = (ops CPURegs, limm32);
+}
+def MEMlir : Operand<i32> {  // Long immediate + register.
+  let PrintMethod = "printMemOperand";
+    let MIOperandInfo = (ops limm32, CPURegs);
 }
 
 //===----------------------------------------------------------------------===//
@@ -81,6 +96,34 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
 def ADDrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, CPURegs:$src2),
                    "add $dst,$src1,$src2",
                    [(set CPURegs:$dst, (add CPURegs:$src1, CPURegs:$src2))]>;
+
+// LD - Page 239.
+//    Loads the value stored at a memory address into the destination register.
+//    The memory address may be given as a single long immediate, or as two
+//    operands whose values will be added together to get the address.
+//
+//    The suffixes given here refer to the memory address format - for example,
+//    ri means an address given by a register + a signed 9-bit immediate.
+
+def LDri : Pseudo<(outs CPURegs:$dst), (ins MEMri:$addr),
+                  "ld $dst,$addr",
+                  [(set CPURegs:$dst, (load ADDRri:$addr))]>;
+
+def LDli : Pseudo<(outs CPURegs:$dst), (ins MEMli:$addr),
+                   "ld $dst,$addr",
+                   [(set CPURegs:$dst, (load ADDRli:$addr))]>;
+
+def LDrr : Pseudo<(outs CPURegs:$dst), (ins MEMrr:$addr),
+                    "ld $dst,$addr",
+                    [(set CPURegs:$dst, (load ADDRrr:$addr))]>;
+
+def LDrli : Pseudo<(outs CPURegs:$dst), (ins MEMrli:$addr),
+                    "ld $dst,$addr",
+                    [(set CPURegs:$dst, (load ADDRrli:$addr))]>;
+
+def LDlir : Pseudo<(outs CPURegs:$dst), (ins MEMlir:$addr),
+                    "ld $dst,$addr",
+                    [(set CPURegs:$dst, (load ADDRlir:$addr))]>;
 
 // MOV - Page 262.
 //    The contents of the source are moved into the destination register.

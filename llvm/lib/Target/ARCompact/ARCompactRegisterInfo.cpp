@@ -61,7 +61,36 @@ BitVector ARCompactRegisterInfo::getReservedRegs(const MachineFunction &MF)
 
 void ARCompactRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     int ARCAdj, RegScavenger *RS) const {
-  llvm_unreachable("Not implemented yet!");
+  assert(ARCAdj == 0 && "Unexpected non-zero adjustment!");
+
+  // Find the frame index.
+  unsigned i = 0;
+  MachineInstr &MI = *II;
+  while (!MI.getOperand(i).isFI()) {
+    ++i;
+    assert(i < MI.getNumOperands() && "Instr doesn't have FrameIndex operand!");
+  }
+  int FrameIndex = MI.getOperand(i).getIndex();
+
+  // Addressable stack objects are accessed using negative offsets from the 
+  // frame pointer.
+  MachineFunction &MF = *MI.getParent()->getParent();
+  int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
+    MI.getOperand(i + 1).getImm();
+
+  // Replace frame index with a frame pointer reference.
+  // TODO: Check what size of offset can fit in an immediate field. This will 
+  // depend on the exact instruction being used.
+  if (Offset >= -4096 && Offset <= 4095) {
+    // If the offset is small enough to fit in the immediate field, directly
+    // encode it.
+    MI.getOperand(i).ChangeToRegister(ARC::FP, false);
+    MI.getOperand(i+1).ChangeToImmediate(Offset);
+  } else {
+    // TODO: What is this? Left over from Sparc!
+    MI.getOperand(i).ChangeToRegister(ARC::T1, false);
+    MI.getOperand(i+1).ChangeToImmediate(Offset & ((1 << 10)-1));
+  }
 }
 
 unsigned ARCompactRegisterInfo::getFrameRegister(const MachineFunction &MF) 

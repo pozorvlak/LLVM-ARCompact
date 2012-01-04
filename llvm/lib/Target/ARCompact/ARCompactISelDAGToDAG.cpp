@@ -40,6 +40,9 @@ public:
   // Complex Pattern Selectors.
   bool SelectADDRri(SDValue N, SDValue &Base, SDValue &Offset);
   bool SelectADDRli(SDValue N, SDValue &AddrOut);
+  bool SelectADDRrr(SDValue N, SDValue &R1, SDValue &R2);
+  bool SelectADDRrli(SDValue N, SDValue &R1, SDValue &Offset);
+  bool SelectADDRlir(SDValue N, SDValue &R1, SDValue &Offset);
 
   virtual const char *getPassName() const {
     return "ARCOMPACT DAG->DAG Pattern Instruction Selection";
@@ -57,10 +60,12 @@ private:
 /// to the value of it's offset, or returns false if unable to process
 /// the memory address.
 bool ARCompactDAGToDAGISel::SelectADDRri(SDValue Addr,
-                                     SDValue &Base, SDValue &Offset) {
-  // Don't support frame-index stuff, yet.
-  if (dyn_cast<FrameIndexSDNode>(Addr)) {
-    return false;
+    SDValue &Base, SDValue &Offset) {
+  // TODO: What *is* this?
+  if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
+    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
+    Offset = CurDAG->getTargetConstant(0, MVT::i32);
+    return true;
   }
   
   // Many targets have code for the operand being the result of an ADD. Unclear
@@ -79,7 +84,32 @@ bool ARCompactDAGToDAGISel::SelectADDRri(SDValue Addr,
 /// return false if unable to process the memory address (e.g. if
 /// it is not a limm address).
 bool ARCompactDAGToDAGISel::SelectADDRli(SDValue Addr, SDValue &AddrOut) {
-  llvm_unreachable("SelectADDRli not yet implemented!");
+  return false;
+}
+
+
+/// Sets R1 and R2 to the values of the memory address operands, or 
+/// return false if unable to process the memory address (e.g. if
+/// it is not a register, register address).
+bool ARCompactDAGToDAGISel::SelectADDRrr(SDValue Addr, SDValue &R1,
+    SDValue &R2) {
+  return false;
+}
+
+/// Sets R1 and Offset to the values of the memory address operands, or 
+/// return false if unable to process the memory address (e.g. if
+/// it is not a register, long-immediate address).
+bool ARCompactDAGToDAGISel::SelectADDRrli(SDValue Addr, SDValue &R1,
+    SDValue &Offset) {
+  return false;
+}
+
+/// Sets Offset and R1 to the values of the memory address operands, or 
+/// return false if unable to process the memory address (e.g. if
+/// it is not a long-immediate, register address).
+bool ARCompactDAGToDAGISel::SelectADDRlir(SDValue Addr, SDValue &Offset,
+    SDValue &R1) {
+  return false;
 }
 
 SDNode *ARCompactDAGToDAGISel::Select(SDNode *Op) {
