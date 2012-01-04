@@ -148,6 +148,34 @@ defm ADD : GenPurposeInst<"add", add>;
 
 defm AND : GenPurposeInst<"and", and>;
 
+// ASL - Page 192.
+//    Arithmetically shifts the source operand, and places the result in the
+//    destination register. The shift amount can be a constant 1 (in the
+//    two-operand version), or an amount given by a second source (in the
+//    three-operand version). If a second source is used, only the bottom
+//    5 bits of the source will be used.
+
+def ASLr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
+                  "asl $dst,$src",
+                  [(set CPURegs:$dst, (shl CPURegs:$src, 1))]>;
+
+def ASLui : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
+                  "asl $dst,$src",
+                  [(set CPURegs:$dst, (shl uimm6:$src, 1))]>;
+
+def ASLli : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
+                  "asl $dst,$src",
+                  [(set CPURegs:$dst, (shl limm32:$src, 1))]>;
+
+// TODO: Model the 5-bit limit somehow?
+
+defm ASL : GenPurposeInst<"asl", shl>;
+
+// ASL also supports a "ASL a,limm,c" format.
+def ASLlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
+                    "asl $dst,$src1,$src2",
+                    [(set CPURegs:$dst, (shl limm32:$src1, CPURegs:$src2))]>;
+
 // LD - Page 239.
 //    Loads the value stored at a memory address into the destination register.
 //    The memory address may be given as a single long immediate, or as two
