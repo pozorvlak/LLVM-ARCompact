@@ -127,11 +127,26 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
 // General Instructions - Alphabetical Order.
 //
 
+// ADC - Page 179.
+//    Add two source operands together, along with the carry value, and place
+//    the result in the destination register.
+
+// TODO: Does this actually use STATUS32?
+let Uses = [STATUS32] in {
+    defm ADC : GenPurposeInst<"adc", adde>;
+}
+
 // ADD - Page 180.
 //    Add two source operands together, and place the result in the destination
 //    register.
 
 defm ADD : GenPurposeInst<"add", add>;
+
+// AND - Page 191.
+//    Takes the logical bitwise AND of two source operands, and places the
+//    result into the destination register.
+
+defm AND : GenPurposeInst<"and", and>;
 
 // LD - Page 239.
 //    Loads the value stored at a memory address into the destination register.
@@ -187,6 +202,48 @@ let isAsCheapAsAMove = 1 in {
                       [(set CPURegs:$dst, limm32:$imm)]>;
 }
 
+// NEG - page 275.
+//    The source value is subtracted from 0 and the result placed in the
+//    destination register.
+//
+//    NEG only has a register-to-register version.
+
+def NEGrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
+                   "neg $dst,$src",
+                   [(set CPURegs:$dst, (ineg CPURegs:$src))]>;
+
+// NOT - page 283.
+//    Takes the logical bitwise NOT of the source operand, and places the
+//    result into the destination register.
+
+def NOTrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
+                   "not $dst,$src",
+                   [(set CPURegs:$dst, (not CPURegs:$src))]>;
+
+def NOTrui : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
+                    "not $dst,$src",
+                    [(set CPURegs:$dst, (not uimm6:$src))]>;
+
+def NOTrli : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
+                    "not $dst,$src",
+                    [(set CPURegs:$dst, (not uimm6:$src))]>;
+
+// OR - page 284.
+//    Takes the logical bitwise OR of the source operands, and places the
+//    result into the destination register.
+
+defm OR : GenPurposeInst<"or", or>;
+
+// SBC - page 302.
+//    Subtracts the second source operand from the first, and then also
+//    subtracts the carry from this value. The result is placed in the 
+//    destination register.
+
+// TODO: Does this actually use STATUS32?
+let Uses = [STATUS32] in {
+    defm SBC : GenPurposeInst<"sbc", sube>;
+}
+
 // ST - page 310.
 //    Stores the value stored in the source operand in the destination memory
 //    address. The source operand may either be a register or a long immediate
@@ -208,3 +265,20 @@ def STrli : Pseudo<(outs), (ins MEMli:$addr, CPURegs:$src),
 def STliri : Pseudo<(outs), (ins MEMri:$addr, i32imm:$src),
                     "st $src,$addr",
                     [(store limm32:$src, ADDRri:$addr)]>;
+
+// SUB - Page 312.
+//    Subtracts the second source operand from the first, and places the result
+//    into the destination register.
+
+defm SUB : GenPurposeInst<"sub", sub>;
+
+// SUB also supports a "SUB a,limm,c" format.
+def SUBlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
+                      "sub $dst,$src1,$src2",
+                      [(set CPURegs:$dst, (sub limm32:$src1, CPURegs:$src2))]>;
+
+// XOR - page 332.
+//    Takes the logical bitwise XOR of the source operands, and places the
+//    result into the destination register.
+
+defm XOR : GenPurposeInst<"xor", xor>;
