@@ -232,6 +232,34 @@ def LDlir : Pseudo<(outs CPURegs:$dst), (ins MEMlir:$addr),
                     "ld $dst,$addr",
                     [(set CPURegs:$dst, (load ADDRlir:$addr))]>;
 
+// LSR - Page 254.
+//    Logically shifts the source operand right, and places the result in the
+//    destination register. The shift amount can be a constant 1 (in the
+//    two-operand version), or an amount given by a second source (in the
+//    three-operand version). If a second source is used, only the bottom
+//    5 bits of the source will be used.
+
+def LSRr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
+                  "lsr $dst,$src",
+                  [(set CPURegs:$dst, (srl CPURegs:$src, 1))]>;
+
+def LSRui : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
+                  "lsr $dst,$src",
+                  [(set CPURegs:$dst, (srl uimm6:$src, 1))]>;
+
+def LSRli : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
+                  "lsr $dst,$src",
+                  [(set CPURegs:$dst, (srl limm32:$src, 1))]>;
+
+// TODO: Model the 5-bit limit somehow?
+
+defm LSR : GenPurposeInst<"lsr", srl>;
+
+// LSR also supports a "LSR a,limm,c" format.
+def LSRlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
+                    "lsr $dst,$src1,$src2",
+                    [(set CPURegs:$dst, (srl limm32:$src1, CPURegs:$src2))]>;
+
 // MOV - Page 262.
 //    The contents of the source are moved into the destination register.
 
