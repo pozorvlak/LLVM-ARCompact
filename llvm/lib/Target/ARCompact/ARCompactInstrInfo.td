@@ -70,6 +70,44 @@ def MEMlir : Operand<i32> {  // Long immediate + register.
 }
 
 //===----------------------------------------------------------------------===//
+// ARCompact Multi-Classes.
+//===----------------------------------------------------------------------===//
+
+// Captures ARCompact general purpose instructions, which have the following 
+// types:
+//
+//   * Register1 = Register2 op Register3
+//   * Register1 = Register2 op Unsigned Immediate
+//   * Register1 = Register1 op Signed Immediate
+//   * Register1 = Register2 op Long Immediate
+//
+multiclass GenPurposeInst<string opstring, SDNode OpNode> {
+  def rr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, CPURegs:$src2),
+                      !strconcat(opstring, " $dst,$src1,$src2"),
+                      [(set CPURegs:$dst,
+                          (OpNode CPURegs:$src1, CPURegs:$src2))]>;
+
+  def rui : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, i32imm:$src2),
+                      !strconcat(opstring, " $dst,$src1,$src2"),
+                      [(set CPURegs:$dst,
+                          (OpNode CPURegs:$src1, uimm6:$src2))]>;
+
+  // In the signed-immediate case, the source and destination registers must be
+  // the same register, due to encoding constraints.
+  let Constraints = "$src1 = $dst" in { 
+    def rsi : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, i32imm:$src2),
+                        !strconcat(opstring, " $dst,$src1,$src2"),
+                        [(set CPURegs:$dst,
+                            (OpNode CPURegs:$src1, simm12:$src2))]>;
+  }
+
+  def rli : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, i32imm:$src2),
+                      !strconcat(opstring, " $dst,$src1,$src2"),
+                      [(set CPURegs:$dst,
+                          (OpNode CPURegs:$src1, limm32:$src2))]>;
+}
+
+//===----------------------------------------------------------------------===//
 // ARCompact Instructions.
 //===----------------------------------------------------------------------===//
 
@@ -93,9 +131,7 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
 //    Add two source operands together, and place the result in the destination
 //    register.
 
-def ADDrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, CPURegs:$src2),
-                   "add $dst,$src1,$src2",
-                   [(set CPURegs:$dst, (add CPURegs:$src1, CPURegs:$src2))]>;
+defm ADD : GenPurposeInst<"add", add>;
 
 // LD - Page 239.
 //    Loads the value stored at a memory address into the destination register.
