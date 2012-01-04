@@ -44,8 +44,8 @@ ARCompactTargetLowering::ARCompactTargetLowering(TargetMachine &TM)
 
 const char* ARCompactTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
-    case ARCISD::RET_FLAG:   return "ARCISD::RET_FLAG";
-    default:                 return 0;
+    case ARCISD::RET_FLAG:    return "ARCISD::RET_FLAG";
+    default:                  return 0;
   }
 }
 
