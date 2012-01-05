@@ -36,6 +36,6 @@ void ARCompactInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
 }
 
 ARCompactInstrInfo::ARCompactInstrInfo(ARCompactSubtarget &ST)
-  : ARCompactGenInstrInfo(),
+  : ARCompactGenInstrInfo(ARC::ADJCALLSTACKDOWN, ARC::ADJCALLSTACKUP),
     RI(ST, *this), Subtarget(ST) {
 }

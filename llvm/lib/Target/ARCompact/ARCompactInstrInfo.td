@@ -18,12 +18,29 @@
 include "ARCompactInstrFormats.td"
 
 //===----------------------------------------------------------------------===//
+// Type Profiles.
+//===----------------------------------------------------------------------===//
+
+def SDT_ARCCall : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
+def SDT_ARCCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>]>;
+def SDT_ARCCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+
+//===----------------------------------------------------------------------===//
 // ARCompact-specific node definitions.
 //===----------------------------------------------------------------------===//
 
 // Models the return flag of a function.
 def ARCretflag : SDNode<"ARCISD::RET_FLAG", SDTNone,
                         [SDNPHasChain, SDNPOptInGlue]>;
+
+def ARCcall : SDNode<"ARCISD::CALL", SDT_ARCCall,
+                     [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue, SDNPVariadic]>;
+def ARCcallseq_start : 
+    SDNode<"ISD::CALLSEQ_START", SDT_ARCCallSeqStart,
+           [SDNPHasChain, SDNPOutGlue]>;
+def ARCcallseq_end : 
+    SDNode<"ISD::CALLSEQ_END", SDT_ARCCallSeqEnd,
+           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 
 //===----------------------------------------------------------------------===//
 // ARCompact Complex Pattern Definitions.
@@ -115,12 +132,42 @@ multiclass GenPurposeInst<string opstring, SDNode OpNode> {
 // Misc Instructions.
 //
 
+// ADJCALLSTACKDOWN/UP implicitly use/def SP because they may be expanded into
+// a stack adjustment and the codegen must know that they may modify the stack
+// pointer before prolog-epilog rewriting occurs.
+let Defs = [SP], Uses = [SP] in {
+  def ADJCALLSTACKDOWN : Pseudo<(outs), (ins i32imm:$amt),
+                                "#ADJCALLSTACKDOWN",
+                                [(ARCcallseq_start timm:$amt)]>;
+  def ADJCALLSTACKUP   : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
+                                "#ADJCALLSTACKUP",
+                                [(ARCcallseq_end timm:$amt1, timm:$amt2)]>;
+}
+
 // The manual defines the preferred NOP asm as mov 0,0.
 def NOP : Pseudo<(outs), (ins), "mov 0,0", []>;
 
 // A return is modelled as an explicit jump from BLINK.
 let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
     def RET : Pseudo<(outs), (ins), "j.d [blink]", [(ARCretflag)]>;
+}
+
+// TODO: Add clobbered registers.
+// TODO: Find correct ASM instruction and move below.
+let isCall = 1 in {
+  // All calls clobber the non-callee saved registers. SPW is marked as
+  // a use to prevent stack-pointer assignments that appear immediately
+  // before calls from potentially appearing dead. Uses for argument
+  // registers are added manually.
+  let Defs = [STATUS32], Uses = [SP] in {
+    def CALLi : Pseudo<(outs), (ins i32imm:$dst, variable_ops),
+                       "; CALL $dst", 
+                       [(ARCcall imm:$dst)]>;
+
+    def CALLr : Pseudo<(outs), (ins CPURegs:$dst, variable_ops),
+                       "; CALL $dst", 
+                       [(ARCcall CPURegs:$dst)]>;
+  }
 }
 
 //===----------------------------------------------------------------------===//

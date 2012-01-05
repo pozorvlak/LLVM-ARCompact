@@ -44,6 +44,7 @@ ARCompactTargetLowering::ARCompactTargetLowering(TargetMachine &TM)
 
 const char* ARCompactTargetLowering::getTargetNodeName(unsigned Opcode) const {
   switch (Opcode) {
+    case ARCISD::CALL:        return "ARCISD::CALL";
     case ARCISD::RET_FLAG:    return "ARCISD::RET_FLAG";
     default:                  return 0;
   }
@@ -168,4 +169,156 @@ SDValue ARCompactTargetLowering::LowerReturn(SDValue Chain,
 
   return DAG.getNode(ARCISD::RET_FLAG, dl, MVT::Other, Chain,
       RetAddrOffsetNode);
+}
+
+SDValue ARCompactTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
+    CallingConv::ID CallConv, bool isVarArg, bool &isTailCall,
+    const SmallVectorImpl<ISD::OutputArg> &Outs,
+    const SmallVectorImpl<SDValue> &OutVals,
+    const SmallVectorImpl<ISD::InputArg> &Ins,
+    DebugLoc dl, SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const {
+  // ARCompact does not support tail calls yet.
+  isTailCall = false;
+
+  // Analyze operands of the call, assigning locations to each operand.
+  SmallVector<CCValAssign, 16> ArgLocs;
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), 
+      getTargetMachine(), ArgLocs, *DAG.getContext());
+
+  CCInfo.AnalyzeCallOperands(Outs, CC_ARCompact32);
+
+  // Get a count of how many bytes are to be pushed on the stack.
+  unsigned NumBytes = CCInfo.getNextStackOffset();
+
+  Chain = DAG.getCALLSEQ_START(Chain, 
+      DAG.getConstant(NumBytes, getPointerTy(), true));
+
+  SmallVector<std::pair<unsigned, SDValue>, 4> RegsToPass;
+  SmallVector<SDValue, 12> MemOpChains;
+  SDValue StackPtr;
+
+  // Walk the register/memloc assignments, inserting copies/loads.
+  for (unsigned i = 0, e = ArgLocs.size(); i != e; ++i) {
+    CCValAssign &VA = ArgLocs[i];
+
+    SDValue Arg = OutVals[i];
+
+    // Promote the value if needed.
+    switch (VA.getLocInfo()) {
+      case CCValAssign::Full:
+        break;
+      case CCValAssign::SExt:
+        Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), Arg);
+        break;
+      case CCValAssign::ZExt:
+        Arg = DAG.getNode(ISD::ZERO_EXTEND, dl, VA.getLocVT(), Arg);
+        break;
+      case CCValAssign::AExt:
+        Arg = DAG.getNode(ISD::ANY_EXTEND, dl, VA.getLocVT(), Arg);
+        break;
+      default:
+        llvm_unreachable("Unknown loc info!");
+    }
+
+    // Arguments that can be passed in a register must be kept in the 
+    // RegsToPass vector.
+    if (VA.isRegLoc()) {
+      RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
+    } else {
+      // Sanity check.
+      assert(VA.isMemLoc());
+
+      // Get the stack pointer if needed.
+      if (StackPtr.getNode() == 0) {
+        StackPtr = DAG.getCopyFromReg(Chain, dl, ARC::SP, getPointerTy());
+      }
+
+      SDValue PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr, 
+          DAG.getIntPtrConstant(VA.getLocMemOffset()));
+
+      MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, 
+          MachinePointerInfo(),false, false, 0));
+    }
+  }
+
+  // Transform all store nodes into one single node because all store nodes are
+  // independent of each other.
+  if (!MemOpChains.empty()) {
+    Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other, &MemOpChains[0],
+        MemOpChains.size());
+  }
+
+  // Build a sequence of copy-to-reg nodes chained together with token chain and
+  // flag operands which copy the outgoing args into registers.  The InFlag in
+  // necessary since all emitted instructions must be stuck together.
+  SDValue InFlag;
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
+    Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first, 
+        RegsToPass[i].second, InFlag);
+    InFlag = Chain.getValue(1);
+  }
+
+  // If the callee is a GlobalAddress node (quite common, every direct call is)
+  // turn it into a TargetGlobalAddress node so that legalize doesn't hack it.
+  // Likewise ExternalSymbol -> TargetExternalSymbol.
+  if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
+    Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, MVT::i32);
+  }
+  else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee)) {
+    Callee = DAG.getTargetExternalSymbol(E->getSymbol(), MVT::i32);
+  }
+
+  // Returns a chain & a flag for retval copy to use.
+  SDVTList NodeTys = DAG.getVTList(MVT::Other, MVT::Glue);
+  SmallVector<SDValue, 8> Ops;
+  Ops.push_back(Chain);
+  Ops.push_back(Callee);
+
+  // Add the argument registers to the end of the list so that they are
+  // known live into the call.
+  for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
+    Ops.push_back(DAG.getRegister(RegsToPass[i].first, 
+        RegsToPass[i].second.getValueType()));
+  }
+
+  if (InFlag.getNode()) {
+    Ops.push_back(InFlag);
+  }
+
+  Chain = DAG.getNode(ARCISD::CALL, dl, NodeTys, &Ops[0], Ops.size());
+  InFlag = Chain.getValue(1);
+
+  // Create the CALLSEQ_END node.
+  Chain = DAG.getCALLSEQ_END(Chain, 
+      DAG.getConstant(NumBytes, getPointerTy(), true),
+      DAG.getConstant(0, getPointerTy(), true), InFlag);
+  InFlag = Chain.getValue(1);
+
+  // Handle result values, copying them out of physregs into vregs that we
+  // return.
+  return LowerCallResult(Chain, InFlag, CallConv, isVarArg, Ins, dl, DAG,
+      InVals);
+}
+
+SDValue ARCompactTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
+    CallingConv::ID CallConv, bool isVarArg,
+    const SmallVectorImpl<ISD::InputArg> &Ins,
+    DebugLoc dl, SelectionDAG &DAG,
+    SmallVectorImpl<SDValue> &InVals) const {
+  // Assign locations to each value returned by this call.
+  SmallVector<CCValAssign, 16> RVLocs;
+  CCState CCInfo(CallConv, isVarArg, 
+      DAG.getMachineFunction(), getTargetMachine(), RVLocs, *DAG.getContext());
+
+  CCInfo.AnalyzeCallResult(Ins, RetCC_ARCompact32);
+
+  // Copy all of the result registers out of their specified physreg.
+  for (unsigned i = 0; i != RVLocs.size(); ++i) {
+    Chain = DAG.getCopyFromReg(Chain, dl, RVLocs[i].getLocReg(),
+                               RVLocs[i].getValVT(), InFlag).getValue(1);
+    InFlag = Chain.getValue(2);
+    InVals.push_back(Chain.getValue(0));
+  }
+
+  return Chain;
 }

@@ -24,6 +24,10 @@ namespace llvm {
       // Start at the end of the built-in ops.
       FIRST_NUMBER = ISD::BUILTIN_OP_END,
 
+      /// CALL - These operations represent an abstract call
+      /// instruction, which includes a bunch of information.
+      CALL,
+      
       // Return with a flag operand.
       RET_FLAG
     };
@@ -54,6 +58,28 @@ namespace llvm {
         bool isVarArg, const SmallVectorImpl<ISD::OutputArg> &Outs,
         const SmallVectorImpl<SDValue> &OutVals, DebugLoc dl, SelectionDAG &DAG)
         const;
+
+    /// This hook must be implemented to lower calls into the
+    /// the specified DAG. The outgoing arguments to the call are described
+    /// by the Outs array, and the values to be returned by the call are
+    /// described by the Ins array. The implementation should fill in the
+    /// InVals array with legal-type return values from the call, and return
+    /// the resulting token chain value.
+    virtual SDValue LowerCall(SDValue Chain, SDValue Callee, 
+        CallingConv::ID CallConv, bool isVarArg, bool &isTailCall, 
+        const SmallVectorImpl<ISD::OutputArg> &Outs, 
+        const SmallVectorImpl<SDValue> &OutVals,
+        const SmallVectorImpl<ISD::InputArg> &Ins, 
+        DebugLoc dl, SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const;
+
+    /// LowerCallResult - Lower the result values of an ISD::CALL into the
+    /// appropriate copies out of appropriate physical registers.
+    SDValue LowerCallResult(SDValue Chain, SDValue InFlag,  
+        CallingConv::ID CallConv, bool isVarArg,
+        const SmallVectorImpl<ISD::InputArg> &Ins,
+        DebugLoc dl, SelectionDAG &DAG,
+        SmallVectorImpl<SDValue> &InVals) const;
+
   };
 } // end namespace llvm
 

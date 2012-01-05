@@ -37,8 +37,11 @@ struct ARCompactRegisterInfo : public ARCompactGenRegisterInfo {
 
   BitVector getReservedRegs(const MachineFunction &MF) const;
 
-  void eliminateFrameIndex(MachineBasicBlock::iterator II,
-                           int ARCAdj, RegScavenger *RS = NULL) const;
+  void eliminateCallFramePseudoInstr(MachineFunction &MF,
+      MachineBasicBlock &MBB, MachineBasicBlock::iterator I) const;
+
+  void eliminateFrameIndex(MachineBasicBlock::iterator II, int ARCAdj,
+      RegScavenger *RS = NULL) const;
 
   void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 
