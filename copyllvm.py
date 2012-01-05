@@ -69,7 +69,7 @@ def main(llvm_location):
     print output
   else:
     print ""
-    print "LLVM copied successfully. Run makellvm.sh to build it."
+    print "LLVM copied successfully."
 
 if __name__ == "__main__":
   if len(sys.argv) == 2:
