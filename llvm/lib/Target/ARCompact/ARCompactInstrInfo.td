@@ -152,24 +152,6 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
     def RET : Pseudo<(outs), (ins), "j.d [blink]", [(ARCretflag)]>;
 }
 
-// TODO: Add clobbered registers.
-// TODO: Find correct ASM instruction and move below.
-let isCall = 1 in {
-  // All calls clobber the non-callee saved registers. SPW is marked as
-  // a use to prevent stack-pointer assignments that appear immediately
-  // before calls from potentially appearing dead. Uses for argument
-  // registers are added manually.
-  let Defs = [STATUS32], Uses = [SP] in {
-    def CALLi : Pseudo<(outs), (ins i32imm:$dst, variable_ops),
-                       "; CALL $dst", 
-                       [(ARCcall imm:$dst)]>;
-
-    def CALLr : Pseudo<(outs), (ins CPURegs:$dst, variable_ops),
-                       "; CALL $dst", 
-                       [(ARCcall CPURegs:$dst)]>;
-  }
-}
-
 //===----------------------------------------------------------------------===//
 // General Instructions - Alphabetical Order.
 //
@@ -250,6 +232,29 @@ defm ASR : GenPurposeInst<"asr", sra>;
 def ASRlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
                     "asr $dst,$src1,$src2",
                     [(set CPURegs:$dst, (sra limm32:$src1, CPURegs:$src2))]>;
+
+// BLcc - Page 212.
+//    When the specified condition code is met (cc = true in the unconditional
+//    case), the program jumps to the given label and the address of the BLcc
+//    instruction is stored in the link register BLINK.
+
+// TODO: Add clobbered registers.
+// TODO: Should this clobber STATUS32 or not?
+// TODO: Add conditional jumps.
+let isCall = 1 in {
+  // All calls clobber the non-callee saved registers. SP is marked as
+  // a use to prevent stack-pointer assignments that appear immediately
+  // before calls from potentially appearing dead.
+  let Defs = [STATUS32], Uses = [SP] in {
+    // Unconditional jump.
+    def BLi : Pseudo<(outs), (ins i32imm:$dst, variable_ops),
+                       "bl $dst",
+                       [(ARCcall imm:$dst)]>;
+    def BLr : Pseudo<(outs), (ins CPURegs:$dst, variable_ops),
+                       "bl $dst", 
+                       [(ARCcall CPURegs:$dst)]>;
+  }
+}
 
 // LD - Page 239.
 //    Loads the value stored at a memory address into the destination register.
