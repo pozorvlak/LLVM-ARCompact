@@ -246,6 +246,7 @@ let isCall = 1 in {
   // a use to prevent stack-pointer assignments that appear immediately
   // before calls from potentially appearing dead.
   let Defs = [STATUS32], Uses = [SP] in {
+    // TODO: Are both versions (i32imm and CPURegs) needed? Why?
     // Unconditional jump.
     def BLi : Pseudo<(outs), (ins i32imm:$dst, variable_ops),
                        "bl $dst",
