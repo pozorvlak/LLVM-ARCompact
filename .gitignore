@@ -54,3 +54,7 @@ llvm/include/llvm/ADT/*
 build/*
 # TODO: Replace with script.
 !build/.placeholder
+
+# TEST
+# Ignore generated assembly files (test.s), but keep old.s files.
+test/*/test.s
