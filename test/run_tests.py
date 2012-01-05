@@ -9,6 +9,9 @@ bash_change = "\033[1;35m"
 bash_success = "\033[1;32m"
 bash_normal = "\033[1;m"
 
+def success(text):
+  print bash_success + text + bash_normal
+
 def warn(text):
   print bash_warning + text + bash_normal
 
@@ -40,6 +43,7 @@ def main():
     test_c = test_folder + "/test.c"
     test_bc = test_folder + "/test.bc"
     test_s = test_folder + "/test.s"
+    old_s = test_folder + "/old.s"
 
     c_file_exists = os.path.isfile(test_c)
     bc_file_exists = os.path.isfile(test_bc)
@@ -75,12 +79,13 @@ def main():
       warn("WARNING! " + entry + ":\tUnable to find test.c or test.bc files.")
       continue
 
-    if os.path.isfile(test_folder + "/old.s"):
-      # Diff
-      # if not same:
-        # print "Test BLAH changed."
-      changed(entry + ":\tDiffing.")
-      pass
+    if os.path.isfile(old_s):
+      command = "diff " + test_s + " " + old_s
+      status, output = commands.getstatusoutput(command)
+      if status == 0:
+        success(entry + ":\tPassed.")
+      else:
+        changed(entry + ":\tDetected difference between test.s and old.s.")
     else:
       changed(entry + ":\tNew test detected. Please examine the test.s output, and move it to 'old.s'.")
 
