@@ -51,6 +51,15 @@ void ARCompactAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
       O << MO.getSymbolName();
       break;
 
+    // A comment.
+    case MachineOperand::MO_Metadata:
+      // EOL comments need to be prefixed with a space.
+      if (MI->getNumOperands() > 1) {
+        O << " ";
+      }
+      O << "; " << cast<MDString>(MO.getMetadata()->getOperand(0))->getString();
+      break;
+
     default:
       llvm_unreachable("Unknown operand type!");
   }
