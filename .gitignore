@@ -56,5 +56,7 @@ build/*
 !build/.placeholder
 
 # TEST
-# Ignore generated assembly files (test.s), but keep old.s files.
+# Ignore generated assembly files (test.s) and gcc files, 
+# but keep old.s files.
+test/*/gcc-test.s
 test/*/test.s
