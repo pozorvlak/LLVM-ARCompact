@@ -14,7 +14,7 @@ class OutputType:
   WARNING = "\033[1;33m"  # Yellow.
   ERROR = "\033[0;31m"    # Red.
 
-# Prints a type of text (usually given as a member of OutputType) 
+# Prints a type of text (usually given as a member of OutputType)
 # to stdout.
 def output_text(type, text):
   # \033[1;m returns bash to it's normal colour.
