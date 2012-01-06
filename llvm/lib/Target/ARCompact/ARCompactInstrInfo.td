@@ -144,6 +144,9 @@ let Defs = [SP], Uses = [SP] in {
                                 [(ARCcallseq_end timm:$amt1, timm:$amt2)]>;
 }
 
+// Used to manually insert comments into the generated assembly.
+def COMMENT : Pseudo<(outs), (ins CPURegs:$fake), "$fake", []>;
+
 // The manual defines the preferred NOP asm as mov 0,0.
 def NOP : Pseudo<(outs), (ins), "mov 0,0", []>;
 
