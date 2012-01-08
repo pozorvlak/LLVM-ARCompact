@@ -22,6 +22,8 @@ int f(signed int x, signed int y) {
   // Shift by a value greater than the width is undefined, and LLVM removes 
   // these.
   signed int g = x >> 6000;
+
+  return 0;
 }
 
 int main() {
