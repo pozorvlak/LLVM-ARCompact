@@ -24,6 +24,7 @@ f:                                      ; @f
 	ld r0,[fp,-4]
 	add r0,r0,6000
 	st r0,[fp,-24]
+	mov r0,0
 	; EPILOGUE START
 	add sp,sp,24
 	add sp,sp,4
