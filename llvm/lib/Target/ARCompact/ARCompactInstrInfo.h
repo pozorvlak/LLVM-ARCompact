@@ -36,6 +36,25 @@ public:
                            unsigned DestReg, unsigned SrcReg,
                            bool KillSrc) const;
 
+  /// Store the specified register of the given register class to the specified
+  /// stack frame index. The store instruction is to be added to the given
+  /// machine basic block before the specified machine instruction. If isKill
+  /// is true, the register operand is the last use and must be marked kill.
+  virtual void storeRegToStackSlot(MachineBasicBlock &MBB,
+      MachineBasicBlock::iterator MI,
+      unsigned SrcReg, bool isKill, int FrameIndex,
+      const TargetRegisterClass *RC,
+      const TargetRegisterInfo *TRI) const;
+
+  /// Load the specified register of the given register class from the 
+  /// specified stack frame index. The load instruction is to be added to the
+  /// given machine basic block before the specified machine instruction.
+  virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
+      MachineBasicBlock::iterator MI,
+      unsigned DestReg, int FrameIdx,
+      const TargetRegisterClass *RC,
+      const TargetRegisterInfo *TRI) const;
+
   /// Returns the RegisterInfo for the Target. 
   virtual const ARCompactRegisterInfo &getRegisterInfo() const {
     return RI;

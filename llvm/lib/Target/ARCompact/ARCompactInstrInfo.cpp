@@ -28,6 +28,11 @@
 
 using namespace llvm;
 
+ARCompactInstrInfo::ARCompactInstrInfo(ARCompactSubtarget &ST)
+  : ARCompactGenInstrInfo(ARC::ADJCALLSTACKDOWN, ARC::ADJCALLSTACKUP),
+    RI(ST, *this), Subtarget(ST) {
+}
+
 void ARCompactInstrInfo::copyPhysReg(MachineBasicBlock &MBB, 
     MachineBasicBlock::iterator I, DebugLoc DL, unsigned int DestReg,
     unsigned int SrcReg, bool KillSrc) const {
@@ -35,7 +40,26 @@ void ARCompactInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       .addReg(SrcReg, getKillRegState(KillSrc));
 }
 
-ARCompactInstrInfo::ARCompactInstrInfo(ARCompactSubtarget &ST)
-  : ARCompactGenInstrInfo(ARC::ADJCALLSTACKDOWN, ARC::ADJCALLSTACKUP),
-    RI(ST, *this), Subtarget(ST) {
+#include <iostream>
+void ARCompactInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
+    MachineBasicBlock::iterator MI, unsigned SrcReg, bool isKill, int FrameIdx,
+    const TargetRegisterClass *RC, const TargetRegisterInfo *TRI) const {
+  std::cerr << "LOLOLOLLOLOLOL" << std::endl;
+  DebugLoc DL;
+  if (MI != MBB.end()) DL = MI->getDebugLoc();
+
+  BuildMI(MBB, MI, DL, get(ARC::STrli))
+      .addFrameIndex(FrameIdx).addImm(0)
+      .addReg(SrcReg, getKillRegState(isKill));
+}
+
+void ARCompactInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
+    MachineBasicBlock::iterator MI, unsigned DestReg, int FrameIdx,
+    const TargetRegisterClass *RC, const TargetRegisterInfo *TRI) const {
+  DebugLoc DL;
+  if (MI != MBB.end()) DL = MI->getDebugLoc();
+
+  BuildMI(MBB, MI, DL, get(ARC::LDrli))
+      .addReg(DestReg)
+      .addFrameIndex(FrameIdx).addImm(0);
 }
