@@ -66,10 +66,10 @@ void ARCompactRegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,
 }
 
 void ARCompactRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
-    int ARCAdj, RegScavenger *RS) const {
-  assert(ARCAdj == 0 && "Unexpected non-zero adjustment!");
+    int SPAdj, RegScavenger *RS) const {
+  assert(SPAdj == 0 && "Unexpected non-zero adjustment!");
 
-  // Find the frame index.
+  // Find the frame index operand.
   unsigned i = 0;
   MachineInstr &MI = *II;
   while (!MI.getOperand(i).isFI()) {
@@ -97,6 +97,11 @@ void ARCompactRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
     MI.getOperand(i).ChangeToRegister(ARC::T1, false);
     MI.getOperand(i+1).ChangeToImmediate(Offset & ((1 << 10)-1));
   }
+}
+
+// Return-Address Register.
+unsigned ARCompactRegisterInfo::getRARegister() const {
+    return ARC::BLINK;
 }
 
 unsigned ARCompactRegisterInfo::getFrameRegister(const MachineFunction &MF) 

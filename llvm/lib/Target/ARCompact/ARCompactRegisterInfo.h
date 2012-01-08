@@ -46,6 +46,7 @@ struct ARCompactRegisterInfo : public ARCompactGenRegisterInfo {
   void processFunctionBeforeFrameFinalized(MachineFunction &MF) const;
 
   // Debug information queries.
+  unsigned getRARegister() const;
   unsigned getFrameRegister(const MachineFunction &MF) const;
 };
 
