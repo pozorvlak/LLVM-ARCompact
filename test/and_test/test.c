@@ -10,6 +10,8 @@ int f(int x, int y) {
 
   // Register-long-immediate.
   int d = x & 6000;
+
+  return 0;
 }
 
 int main() {
