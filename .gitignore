@@ -60,3 +60,6 @@ build/*
 # but keep old.s files.
 test/*/gcc-test.s
 test/*/test.s
+
+# Ignore the log too.
+test/test_log.txt
