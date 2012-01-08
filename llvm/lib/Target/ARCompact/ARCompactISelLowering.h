@@ -27,7 +27,16 @@ namespace llvm {
       /// CALL - These operations represent an abstract call
       /// instruction, which includes a bunch of information.
       CALL,
-      
+
+      /// CMP - Compare instruction.
+      CMP,
+
+      /// ARC conditional branches. Operand 0 is the chain operand, operand 1
+      /// is the block to branch if condition is true, operand 2 is the
+      /// condition code, and operand 3 is the flag operand produced by a CMP
+      /// instruction.
+      BR_CC,
+
       // Return with a flag operand.
       RET_FLAG
     };
@@ -79,6 +88,12 @@ namespace llvm {
         const SmallVectorImpl<ISD::InputArg> &Ins,
         DebugLoc dl, SelectionDAG &DAG,
         SmallVectorImpl<SDValue> &InVals) const;
+
+    virtual EVT getSetCCResultType(EVT VT) const;
+
+    SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG) const;
 
   };
 } // end namespace llvm

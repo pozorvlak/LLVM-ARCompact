@@ -25,13 +25,13 @@ def SDT_ARCCall : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
 def SDT_ARCCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>]>;
 def SDT_ARCCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
 
+def SDT_ARCCmp          : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
+def SDT_ARCBrCC         : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>,
+                                               SDTCisVT<1, i32>]>;
+
 //===----------------------------------------------------------------------===//
 // ARCompact-specific node definitions.
 //===----------------------------------------------------------------------===//
-
-// Models the return flag of a function.
-def ARCretflag : SDNode<"ARCISD::RET_FLAG", SDTNone,
-                        [SDNPHasChain, SDNPOptInGlue]>;
 
 def ARCcall : SDNode<"ARCISD::CALL", SDT_ARCCall,
                      [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue, SDNPVariadic]>;
@@ -41,6 +41,14 @@ def ARCcallseq_start :
 def ARCcallseq_end : 
     SDNode<"ISD::CALLSEQ_END", SDT_ARCCallSeqEnd,
            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
+
+def ARCcmp     : SDNode<"ARCISD::CMP", SDT_ARCCmp, [SDNPOutGlue]>;
+def ARCbrcc    : SDNode<"ARCISD::BR_CC", SDT_ARCBrCC, 
+                        [SDNPHasChain, SDNPInGlue]>;
+
+// Models the return flag of a function.
+def ARCretflag : SDNode<"ARCISD::RET_FLAG", SDTNone,
+                        [SDNPHasChain, SDNPOptInGlue]>;
 
 //===----------------------------------------------------------------------===//
 // ARCompact Complex Pattern Definitions.
@@ -85,6 +93,15 @@ def MEMlir : Operand<i32> {  // Long immediate + register.
   let PrintMethod = "printMemOperand";
     let MIOperandInfo = (ops limm32, CPURegs);
 }
+
+// Operand for printing out a condition code.
+def cc : Operand<i32> {
+    let PrintMethod = "printCCOperand";
+}
+
+// Branch targets have OtherVT type.
+// TODO: How should brtargets be printed?
+def brtarget : Operand<OtherVT>;
 
 //===----------------------------------------------------------------------===//
 // ARCompact Multi-Classes.
@@ -153,6 +170,14 @@ def NOP : Pseudo<(outs), (ins), "mov 0,0", []>;
 // A return is modelled as an explicit jump from BLINK.
 let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
     def RET : Pseudo<(outs), (ins), "j.d [blink]", [(ARCretflag)]>;
+}
+
+// A direct branch
+// TODO: Move this below, and fix the asm output.
+let isBarrier = 1, isBranch = 1, isTerminator = 1 in {
+    def BRANCH : Pseudo<(outs), (ins brtarget:$dst),
+                        "; BRANCH $dst",
+                        [(br bb:$dst)]>;
 }
 
 //===----------------------------------------------------------------------===//
@@ -236,6 +261,18 @@ def ASRlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
                     "asr $dst,$src1,$src2",
                     [(set CPURegs:$dst, (sra limm32:$src1, CPURegs:$src2))]>;
 
+// Bcc - Page 206.
+//    Branches to another location, with an optional condition code. The
+//    condition is evaluated against the state of the condition bits in
+//    STATUS32; that is, the actual source of the condition must be computed
+//    previously.
+
+let isBranch = 1, isTerminator = 1, Uses = [STATUS32] in {
+    def BCC : Pseudo<(outs), (ins brtarget:$dst, cc:$cc), 
+                     "b$cc $dst",
+                     [(ARCbrcc bb:$dst, imm:$cc)]>;
+} // Uses = [STATUS32]
+
 // BLcc - Page 212.
 //    When the specified condition code is met (cc = true in the unconditional
 //    case), the program jumps to the given label and the address of the BLcc
@@ -259,6 +296,33 @@ let isCall = 1 in {
                        [(ARCcall CPURegs:$dst)]>;
   }
 }
+
+// CMP - Page 225.
+//    Performs a comparison by subtracting the second source operand from the
+//    first, updating the condition flags based on the result. The actual
+//    result of the subtraction is discarded.
+
+let Defs = [STATUS32] in {
+  def CMPrr : Pseudo<(outs), (ins CPURegs:$src1, CPURegs:$src2),
+                      "cmp $src1,$src2",
+                      [(ARCcmp CPURegs:$src1, CPURegs:$src2)]>;
+
+  def CMPrsi : Pseudo<(outs), (ins CPURegs:$src1, i32imm:$src2),
+                      "cmp $src1,$src2",
+                      [(ARCcmp CPURegs:$src1, simm12:$src2)]>;
+
+  def CMPrui : Pseudo<(outs), (ins CPURegs:$src1, i32imm:$src2),
+                      "cmp $src1,$src2",
+                      [(ARCcmp CPURegs:$src1, uimm6:$src2)]>;
+
+  def CMPrli : Pseudo<(outs), (ins CPURegs:$src1, i32imm:$src2),
+                      "cmp $src1,$src2",
+                      [(ARCcmp CPURegs:$src1, limm32:$src2)]>;
+
+  def CMPlir : Pseudo<(outs), (ins i32imm:$src1, CPURegs:$src2),
+                      "cmp $src1,$src2",
+                      [(ARCcmp limm32:$src1, CPURegs:$src2)]>;
+} // Defs = [STATUS32]
 
 // LD - Page 239.
 //    Loads the value stored at a memory address into the destination register.

@@ -84,6 +84,34 @@ void ARCompactAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
   O << "]";
 }
 
+// Prints a condition code, such as "eq".
+void ARCompactAsmPrinter::printCCOperand(const MachineInstr *MI, int OpNum, 
+    raw_ostream &O) {
+  unsigned CC = MI->getOperand(OpNum).getImm();
+  switch (CC) {
+    case ARCCC::COND_EQ:
+      O << "eq";
+      break;
+    case ARCCC::COND_NE:
+      O << "ne";
+      break;
+    case ARCCC::COND_HS:
+      O << "hs";
+      break;
+    case ARCCC::COND_LO:
+      O << "lo";
+      break;
+    case ARCCC::COND_GE:
+      O << "ge";
+      break;
+    case ARCCC::COND_LT:
+      O << "lt";
+      break;
+    default:
+      assert(0 && "Unsupported CC code");
+      break;
+  }
+}
 
 // Static initialization.
 extern "C" void LLVMInitializeARCompactAsmPrinter() { 
