@@ -54,7 +54,7 @@ def main():
         "Subsequent attempts to log will not work!\n")
 
   # Run each test.
-  for entry in os.listdir("."):
+  for entry in sorted(os.listdir(".")):
     # Skip top-level files (including this one!)
     if not os.path.isdir(entry):
       continue
