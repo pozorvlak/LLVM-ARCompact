@@ -503,4 +503,3 @@ def : Pat<(add CPURegs:$src1, (ARCWrapper tglobaladdr:$src2)),
 
 // calls
 def : Pat<(ARCcall (i32 tglobaladdr:$dst)), (BLi tglobaladdr:$dst)>;
-def : Pat<(ARCcall (i32 texternalsym:$dst)), (BLi texternalsym:$dst)>;
