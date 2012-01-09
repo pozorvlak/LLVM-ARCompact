@@ -149,6 +149,17 @@ SDNode *ARCompactDAGToDAGISel::Select(SDNode *Op) {
 
   // Check if we need to do anything extra for the node.
   switch (Op->getOpcode()) {
+    case ISD::FrameIndex: {
+      assert(Op->getValueType(0) == MVT::i32);
+      int FI = cast<FrameIndexSDNode>(Op)->getIndex();
+      SDValue TFI = CurDAG->getTargetFrameIndex(FI, MVT::i32);
+      if (Op->hasOneUse()) {
+        return CurDAG->SelectNodeTo(Op, ARC::ADDrli, MVT::i32, TFI,
+            CurDAG->getTargetConstant(0, MVT::i32));
+      }
+      return CurDAG->getMachineNode(ARC::ADDrli, dl, MVT::i32, TFI,
+          CurDAG->getTargetConstant(0, MVT::i32));
+    }
     default:
       // Do nothing - let SelectCode handle it.
       break;
