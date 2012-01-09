@@ -59,20 +59,35 @@ private:
 /// Sets Base to the value of the memory address operand, and Offset
 /// to the value of it's offset, or returns false if unable to process
 /// the memory address.
-bool ARCompactDAGToDAGISel::SelectADDRri(SDValue Addr,
-    SDValue &Base, SDValue &Offset) {
-  // TODO: What *is* this?
+bool ARCompactDAGToDAGISel::SelectADDRri(SDValue Addr, SDValue &Base,
+    SDValue &Offset) {
+  // Select a frame index node, if there is one. The offset will be
+  // computed later, in eliminateFrameIndex.
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
     Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
     Offset = CurDAG->getTargetConstant(0, MVT::i32);
     return true;
   }
-  
-  // Many targets have code for the operand being the result of an ADD. Unclear
-  // if that is target-specific or a generic thing, so for now just error on
-  // such cases.
+
+  // If the address is calculated from an addition, we may as well
+  // absorb the addition into the address.
   if (Addr.getOpcode() == ISD::ADD) {
-    llvm_unreachable("SelectADDRrr: ADD.");
+    // TODO: Is using a 32-bit limm actually better, or should we restrict
+    // to only the 9-bit simm case?
+    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) {
+      uint64_t CVal = CN->getZExtValue();
+      // If shifting left,right 32 bits (64 - 32) doesnt change CVal, it's i32.
+      if (((CVal << 32) >> 32) == CVal) {
+        SDValue N0 = Addr.getOperand(0);
+        if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N0))
+          Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
+        else
+          Base = N0;
+
+        Offset = CurDAG->getTargetConstant(CVal, MVT::i32);
+        return true;
+      }
+    }
   }
 
   Base = Addr;
@@ -88,7 +103,7 @@ bool ARCompactDAGToDAGISel::SelectADDRli(SDValue Addr, SDValue &AddrOut) {
 }
 
 
-/// Sets R1 and R2 to the values of the memory address operands, or 
+/// Sets R1 and R2 to the values of the memory address operands, or
 /// return false if unable to process the memory address (e.g. if
 /// it is not a register, register address).
 bool ARCompactDAGToDAGISel::SelectADDRrr(SDValue Addr, SDValue &R1,
@@ -96,7 +111,7 @@ bool ARCompactDAGToDAGISel::SelectADDRrr(SDValue Addr, SDValue &R1,
   return false;
 }
 
-/// Sets R1 and Offset to the values of the memory address operands, or 
+/// Sets R1 and Offset to the values of the memory address operands, or
 /// return false if unable to process the memory address (e.g. if
 /// it is not a register, long-immediate address).
 bool ARCompactDAGToDAGISel::SelectADDRrli(SDValue Addr, SDValue &R1,
@@ -104,7 +119,7 @@ bool ARCompactDAGToDAGISel::SelectADDRrli(SDValue Addr, SDValue &R1,
   return false;
 }
 
-/// Sets Offset and R1 to the values of the memory address operands, or 
+/// Sets Offset and R1 to the values of the memory address operands, or
 /// return false if unable to process the memory address (e.g. if
 /// it is not a long-immediate, register address).
 bool ARCompactDAGToDAGISel::SelectADDRlir(SDValue Addr, SDValue &Offset,
@@ -122,7 +137,7 @@ SDNode *ARCompactDAGToDAGISel::Select(SDNode *Op) {
 
   // Check if we need to do anything extra for the node.
   switch (Op->getOpcode()) {
-    default: 
+    default:
       // Do nothing - let SelectCode handle it.
       break;
   }
@@ -131,7 +146,7 @@ SDNode *ARCompactDAGToDAGISel::Select(SDNode *Op) {
   return SelectCode(Op);
 }
 
-/// Converts a legalized DAG into an  ARCOMPACT-specific DAG, ready for 
+/// Converts a legalized DAG into an  ARCOMPACT-specific DAG, ready for
 /// instruction scheduling.
 FunctionPass *llvm::createARCompactISelDag(ARCompactTargetMachine &TM) {
   return new ARCompactDAGToDAGISel(TM);
