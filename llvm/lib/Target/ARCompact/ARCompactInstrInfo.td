@@ -172,13 +172,6 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
     def RET : Pseudo<(outs), (ins), "j.d [blink]", [(ARCretflag)]>;
 }
 
-// A direct branch
-// TODO: Move this below, and fix the asm output.
-let isBarrier = 1, isBranch = 1, isTerminator = 1 in {
-    def BRANCH : Pseudo<(outs), (ins brtarget:$dst),
-                        "; BRANCH $dst",
-                        [(br bb:$dst)]>;
-}
 
 //===----------------------------------------------------------------------===//
 // General Instructions - Alphabetical Order.
@@ -266,6 +259,13 @@ def ASRlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
 //    condition is evaluated against the state of the condition bits in
 //    STATUS32; that is, the actual source of the condition must be computed
 //    previously.
+
+// An unconditional branch.
+let isBarrier = 1, isBranch = 1, isTerminator = 1 in {
+    def BRANCH : Pseudo<(outs), (ins brtarget:$dst),
+                        "b $dst",
+                        [(br bb:$dst)]>;
+}
 
 let isBranch = 1, isTerminator = 1, Uses = [STATUS32] in {
     def BCC : Pseudo<(outs), (ins brtarget:$dst, cc:$cc), 
