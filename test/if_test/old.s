@@ -25,14 +25,14 @@ f:                                      ; @f
 	bgt .BB0_4
 ; BB#3:
 	st 4,[fp,-12]
-	; BRANCH .BB0_7
+	b .BB0_7
 .BB0_4:
 	ld r0,[fp,-12]
 	cmp r0,6
 	blt .BB0_6
 ; BB#5:
 	st 3,[fp,-12]
-	; BRANCH .BB0_7
+	b .BB0_7
 .BB0_6:
 	st 7,[fp,-12]
 .BB0_7:
@@ -53,7 +53,7 @@ f:                                      ; @f
 	ld r0,[fp,-12]
 	add r0,r0,7
 	st r0,[fp,-12]
-	; BRANCH .BB0_13
+	b .BB0_13
 .BB0_11:
 	ld r0,[fp,-12]
 	ld r1,[fp,-4]
