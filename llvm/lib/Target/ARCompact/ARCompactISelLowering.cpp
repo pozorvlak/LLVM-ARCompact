@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file implements the interfaces that ARCompact uses to lower LLVM code 
+// This file implements the interfaces that ARCompact uses to lower LLVM code
 // into a selection DAG.
 //
 //===----------------------------------------------------------------------===//
@@ -41,8 +41,10 @@ ARCompactTargetLowering::ARCompactTargetLowering(TargetMachine &TM)
   // Do not have division, so int-division is expensive.
   setIntDivIsCheap(false);
 
-  setOperationAction(ISD::BR_CC,      MVT::i32,   Custom);
-  setOperationAction(ISD::BRCOND,     MVT::Other, Expand);
+  setOperationAction(ISD::GlobalAddress,  MVT::i32,   Custom);
+  setOperationAction(ISD::BR_CC,          MVT::i32,   Custom);
+  setOperationAction(ISD::BRCOND,         MVT::Other, Expand);
+
 }
 
 const char* ARCompactTargetLowering::getTargetNodeName(unsigned Opcode) const {
@@ -50,16 +52,17 @@ const char* ARCompactTargetLowering::getTargetNodeName(unsigned Opcode) const {
     case ARCISD::CALL:        return "ARCISD::CALL";
     case ARCISD::CMP:         return "ARCISD::CMP";
     case ARCISD::BR_CC:       return "ARCISD::BR_CC";
+    case ARCISD::Wrapper:     return "ARCISD::Wrapper";
     case ARCISD::RET_FLAG:    return "ARCISD::RET_FLAG";
     default:                  return 0;
   }
 }
 
-SDValue ARCompactTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG) 
+SDValue ARCompactTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
     const {
   switch (Op.getOpcode()) {
-    case ISD::BR_CC:
-      return LowerBR_CC(Op, DAG);
+    case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
+    case ISD::BR_CC:            return LowerBR_CC(Op, DAG);
     default:
       assert(0 && "Unimplemented operand!");
       return SDValue();
@@ -70,8 +73,8 @@ SDValue ARCompactTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
 /// described by the Ins array, into the specified DAG. The implementation
 /// should fill in the InVals array with legal-type argument values, and return
 /// the resulting token chain value.
-SDValue ARCompactTargetLowering::LowerFormalArguments(SDValue Chain, 
-    CallingConv::ID CallConv, bool isVarArg, 
+SDValue ARCompactTargetLowering::LowerFormalArguments(SDValue Chain,
+    CallingConv::ID CallConv, bool isVarArg,
     const SmallVectorImpl<ISD::InputArg> &Ins, DebugLoc dl, SelectionDAG &DAG,
     SmallVectorImpl<SDValue> &InVals) const {
   MachineFunction &MF = DAG.getMachineFunction();
@@ -114,10 +117,10 @@ SDValue ARCompactTargetLowering::LowerFormalArguments(SDValue Chain,
       // Create the frame index object for this incoming parameter...
       int FI = MFI->CreateFixedObject(ObjSize, VA.getLocMemOffset(), true);
 
-      // Create the SelectionDAG nodes corresponding to a load from this 
+      // Create the SelectionDAG nodes corresponding to a load from this
       // parameter.
       SDValue FIN = DAG.getFrameIndex(FI, MVT::i32);
-      InVals.push_back(DAG.getLoad(VA.getLocVT(), dl, Chain, FIN, 
+      InVals.push_back(DAG.getLoad(VA.getLocVT(), dl, Chain, FIN,
                                    MachinePointerInfo::getFixedStack(FI),
                                    false, false, false, 0));
     }
@@ -126,10 +129,10 @@ SDValue ARCompactTargetLowering::LowerFormalArguments(SDValue Chain,
   return Chain;
 }
 
-SDValue ARCompactTargetLowering::LowerReturn(SDValue Chain, 
-    CallingConv::ID CallConv, bool isVarArg, 
-    const SmallVectorImpl<ISD::OutputArg> &Outs, 
-    const SmallVectorImpl<SDValue> &OutVals, DebugLoc dl, SelectionDAG &DAG) 
+SDValue ARCompactTargetLowering::LowerReturn(SDValue Chain,
+    CallingConv::ID CallConv, bool isVarArg,
+    const SmallVectorImpl<ISD::OutputArg> &Outs,
+    const SmallVectorImpl<SDValue> &OutVals, DebugLoc dl, SelectionDAG &DAG)
     const {
   MachineFunction &MF = DAG.getMachineFunction();
 
@@ -147,7 +150,7 @@ SDValue ARCompactTargetLowering::LowerReturn(SDValue Chain,
   // liveout set for the function.
   if (MF.getRegInfo().liveout_empty()) {
     for (unsigned i = 0; i != RVLocs.size(); ++i)
-      if (RVLocs[i].isRegLoc()) { 
+      if (RVLocs[i].isRegLoc()) {
         MF.getRegInfo().addLiveOut(RVLocs[i].getLocReg());
       }
   }
@@ -189,7 +192,7 @@ SDValue ARCompactTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
 
   // Analyze operands of the call, assigning locations to each operand.
   SmallVector<CCValAssign, 16> ArgLocs;
-  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(), 
+  CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
       getTargetMachine(), ArgLocs, *DAG.getContext());
 
   CCInfo.AnalyzeCallOperands(Outs, CC_ARCompact32);
@@ -197,7 +200,7 @@ SDValue ARCompactTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // Get a count of how many bytes are to be pushed on the stack.
   unsigned NumBytes = CCInfo.getNextStackOffset();
 
-  Chain = DAG.getCALLSEQ_START(Chain, 
+  Chain = DAG.getCALLSEQ_START(Chain,
       DAG.getConstant(NumBytes, getPointerTy(), true));
 
   SmallVector<std::pair<unsigned, SDValue>, 4> RegsToPass;
@@ -227,7 +230,7 @@ SDValue ARCompactTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
         llvm_unreachable("Unknown loc info!");
     }
 
-    // Arguments that can be passed in a register must be kept in the 
+    // Arguments that can be passed in a register must be kept in the
     // RegsToPass vector.
     if (VA.isRegLoc()) {
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
@@ -240,10 +243,10 @@ SDValue ARCompactTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
         StackPtr = DAG.getCopyFromReg(Chain, dl, ARC::SP, getPointerTy());
       }
 
-      SDValue PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr, 
+      SDValue PtrOff = DAG.getNode(ISD::ADD, dl, getPointerTy(), StackPtr,
           DAG.getIntPtrConstant(VA.getLocMemOffset()));
 
-      MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff, 
+      MemOpChains.push_back(DAG.getStore(Chain, dl, Arg, PtrOff,
           MachinePointerInfo(),false, false, 0));
     }
   }
@@ -260,7 +263,7 @@ SDValue ARCompactTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // necessary since all emitted instructions must be stuck together.
   SDValue InFlag;
   for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-    Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first, 
+    Chain = DAG.getCopyToReg(Chain, dl, RegsToPass[i].first,
         RegsToPass[i].second, InFlag);
     InFlag = Chain.getValue(1);
   }
@@ -284,7 +287,7 @@ SDValue ARCompactTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // Add the argument registers to the end of the list so that they are
   // known live into the call.
   for (unsigned i = 0, e = RegsToPass.size(); i != e; ++i) {
-    Ops.push_back(DAG.getRegister(RegsToPass[i].first, 
+    Ops.push_back(DAG.getRegister(RegsToPass[i].first,
         RegsToPass[i].second.getValueType()));
   }
 
@@ -296,7 +299,7 @@ SDValue ARCompactTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   InFlag = Chain.getValue(1);
 
   // Create the CALLSEQ_END node.
-  Chain = DAG.getCALLSEQ_END(Chain, 
+  Chain = DAG.getCALLSEQ_END(Chain,
       DAG.getConstant(NumBytes, getPointerTy(), true),
       DAG.getConstant(0, getPointerTy(), true), InFlag);
   InFlag = Chain.getValue(1);
@@ -314,7 +317,7 @@ SDValue ARCompactTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
     SmallVectorImpl<SDValue> &InVals) const {
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
-  CCState CCInfo(CallConv, isVarArg, 
+  CCState CCInfo(CallConv, isVarArg,
       DAG.getMachineFunction(), getTargetMachine(), RVLocs, *DAG.getContext());
 
   CCInfo.AnalyzeCallResult(Ins, RetCC_ARCompact32);
@@ -334,7 +337,7 @@ EVT ARCompactTargetLowering::getSetCCResultType(EVT VT) const {
   return MVT::i32;
 }
 
-// Emits and returns an ARCompact compare instruction for the given 
+// Emits and returns an ARCompact compare instruction for the given
 // ISD::CondCode.
 static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, SDValue &TargetCC,
     ISD::CondCode CC, DebugLoc dl, SelectionDAG &DAG) {
@@ -377,7 +380,7 @@ static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, SDValue &TargetCC,
     case ISD::SETUGE:
       TCC = ARCCC::COND_HS;
       break;
-    default: 
+    default:
       llvm_unreachable("Invalid integer condition!");
   }
 
@@ -386,9 +389,9 @@ static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, SDValue &TargetCC,
 }
 
 
-SDValue ARCompactTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG) 
+SDValue ARCompactTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG)
     const {
-  // Arguments are the chain, the condition code, the lhs, the rhs, and the 
+  // Arguments are the chain, the condition code, the lhs, the rhs, and the
   // destination.
   SDValue Chain = Op.getOperand(0);
   ISD::CondCode CC = cast<CondCodeSDNode>(Op.getOperand(1))->get();
@@ -406,3 +409,16 @@ SDValue ARCompactTargetLowering::LowerBR_CC(SDValue Op, SelectionDAG &DAG)
   return DAG.getNode(ARCISD::BR_CC, dl, Op.getValueType(),
       Chain, Dest, TargetCC, Flag);
 }
+
+SDValue ARCompactTargetLowering::LowerGlobalAddress(SDValue Op,
+    SelectionDAG &DAG) const {
+  const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
+  int64_t Offset = cast<GlobalAddressSDNode>(Op)->getOffset();
+
+  // Create the TargetGlobalAddress node, folding in the constant offset.
+  SDValue Result = DAG.getTargetGlobalAddress(GV, Op.getDebugLoc(),
+      getPointerTy(), Offset);
+  return DAG.getNode(ARCISD::Wrapper, Op.getDebugLoc(),
+      getPointerTy(), Result);
+}
+

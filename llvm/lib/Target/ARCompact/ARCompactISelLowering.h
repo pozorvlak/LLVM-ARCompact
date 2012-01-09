@@ -37,6 +37,10 @@ namespace llvm {
       /// instruction.
       BR_CC,
 
+      /// Wrapper - A wrapper node for TargetConstantPool, TargetExternalSymbol,
+      /// and TargetGlobalAddress.
+      Wrapper,
+
       // Return with a flag operand.
       RET_FLAG
     };
@@ -94,6 +98,7 @@ namespace llvm {
     SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
 
   };
 } // end namespace llvm

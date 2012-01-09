@@ -24,6 +24,8 @@ include "ARCompactInstrFormats.td"
 def SDT_ARCCall : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
 def SDT_ARCCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>]>;
 def SDT_ARCCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+def SDT_ARCWrapper      : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>,
+                                               SDTCisPtrTy<0>]>;
 
 def SDT_ARCCmp          : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def SDT_ARCBrCC         : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>,
@@ -41,6 +43,8 @@ def ARCcallseq_start :
 def ARCcallseq_end : 
     SDNode<"ISD::CALLSEQ_END", SDT_ARCCallSeqEnd,
            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
+def ARCWrapper : SDNode<"ARCISD::Wrapper", SDT_ARCWrapper>;
+
 
 def ARCcmp     : SDNode<"ARCISD::CMP", SDT_ARCCmp, [SDNPOutGlue]>;
 def ARCbrcc    : SDNode<"ARCISD::BR_CC", SDT_ARCBrCC, 
@@ -486,3 +490,17 @@ def SUBlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
 //    result into the destination register.
 
 defm XOR : GenPurposeInst<"xor", xor>;
+
+//===----------------------------------------------------------------------===//
+// ARCompact Non-Instruction Patterns.
+//===----------------------------------------------------------------------===//
+
+// GlobalAddress
+def : Pat<(i32 (ARCWrapper tglobaladdr:$dst)), (MOVrli tglobaladdr:$dst)>;
+
+def : Pat<(add CPURegs:$src1, (ARCWrapper tglobaladdr:$src2)),
+          (ADDrli CPURegs:$src1, tglobaladdr:$src2)>;
+
+// calls
+def : Pat<(ARCcall (i32 tglobaladdr:$dst)), (BLi tglobaladdr:$dst)>;
+def : Pat<(ARCcall (i32 texternalsym:$dst)), (BLi texternalsym:$dst)>;
