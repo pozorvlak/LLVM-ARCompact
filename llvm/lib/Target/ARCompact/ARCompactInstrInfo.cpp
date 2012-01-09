@@ -90,6 +90,7 @@ bool ARCompactInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       if (AllowModify) {
         // If the block has any instructions after the unconditional branch,
         // delete them.
+        // TODO: Check for delay slot!
         while (llvm::next(I) != MBB.end()) {
           llvm::next(I)->eraseFromParent();
         }
