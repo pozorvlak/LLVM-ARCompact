@@ -46,7 +46,7 @@ public:
       const TargetRegisterClass *RC,
       const TargetRegisterInfo *TRI) const;
 
-  /// Load the specified register of the given register class from the 
+  /// Load the specified register of the given register class from the
   /// specified stack frame index. The load instruction is to be added to the
   /// given machine basic block before the specified machine instruction.
   virtual void loadRegFromStackSlot(MachineBasicBlock &MBB,
@@ -55,7 +55,32 @@ public:
       const TargetRegisterClass *RC,
       const TargetRegisterInfo *TRI) const;
 
-  /// Returns the RegisterInfo for the Target. 
+  /// Analyze the branching code at the end of MBB, returning true if it cannot
+  /// be understood (e.g. it's a switch dispatch or isn't implemented for a
+  /// target). Upon success, this returns false and returns with the following
+  /// information in various cases:
+  ///
+  ///   1. If this block ends with no branches (it just falls through to its
+  ///      succ) just return false, leaving TBB/FBB null.
+  ///   2. If this block ends with only an unconditional branch, it sets TBB
+  ///      to be the destination block.
+  ///   3. If this block ends with a conditional branch and it falls through
+  ///      to a successor block, it sets TBB to be the branch destination block
+  ///      and a list of operands that evaluate the condition. These operands
+  ///      can be passed to other TargetInstrInfo methods to create new
+  ///      branches.
+  ///   4. If this block ends with a conditional branch followed by an
+  ///      unconditional branch, it returns the 'true' destination in TBB, the
+  ///      'false' destination in FBB, and a list of operands that evaluate the
+  ///      condition. These operands can be passed to other TargetInstrInfo
+  ///      methods to create new branches.
+  //
+  bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
+      MachineBasicBlock *&FBB, SmallVectorImpl<MachineOperand> &Cond,
+      bool AllowModify) const;
+
+
+  /// Returns the RegisterInfo for the Target.
   virtual const ARCompactRegisterInfo &getRegisterInfo() const {
     return RI;
   }
