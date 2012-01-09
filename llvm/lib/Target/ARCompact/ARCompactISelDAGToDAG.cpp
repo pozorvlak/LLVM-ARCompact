@@ -69,25 +69,39 @@ bool ARCompactDAGToDAGISel::SelectADDRri(SDValue Addr, SDValue &Base,
     return true;
   }
 
-  // If the address is calculated from an addition, we may as well
-  // absorb the addition into the address.
-  if (Addr.getOpcode() == ISD::ADD) {
-    // TODO: Is using a 32-bit limm actually better, or should we restrict
-    // to only the 9-bit simm case?
-    if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) {
-      uint64_t CVal = CN->getZExtValue();
-      // If shifting left,right 32 bits (64 - 32) doesnt change CVal, it's i32.
-      if (((CVal << 32) >> 32) == CVal) {
-        SDValue N0 = Addr.getOperand(0);
-        if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N0))
-          Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
-        else
-          Base = N0;
+  switch (Addr.getOpcode()) {
+    case ISD::ADD:
+      // If the address is calculated from an addition, we may as well
+      // absorb the addition into the address.
+      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) {
+        uint64_t CVal = CN->getZExtValue();
+        // If shifting left,right 32 bits (64 - 32) doesnt change CVal, it's i32.
+        if (((CVal << 32) >> 32) == CVal) {
+          SDValue N0 = Addr.getOperand(0);
+          if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N0))
+            // TODO: Is using a 32-bit limm actually better, or should we restrict
+            // to only the 9-bit simm case?
+            Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
+          else
+            Base = N0;
 
-        Offset = CurDAG->getTargetConstant(CVal, MVT::i32);
-        return true;
+          Offset = CurDAG->getTargetConstant(CVal, MVT::i32);
+          return true;
+        }
       }
-    }
+      break;
+    case ARCISD::Wrapper:
+      SDValue N0 = Addr.getOperand(0);
+      if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
+        // We can match addresses of globals without any offsets
+        if (!G->getOffset()) {
+          Base = CurDAG->getTargetGlobalAddress(G->getGlobal(), Addr.getDebugLoc(), MVT::i32);
+          Offset = CurDAG->getTargetConstant(0, MVT::i32);
+
+          return true;
+        }
+      }
+      break;
   }
 
   Base = Addr;
