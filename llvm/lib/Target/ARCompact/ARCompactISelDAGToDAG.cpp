@@ -93,13 +93,11 @@ bool ARCompactDAGToDAGISel::SelectADDRri(SDValue Addr, SDValue &Base,
     case ARCISD::Wrapper:
       SDValue N0 = Addr.getOperand(0);
       if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
-        // We can match addresses of globals without any offsets
-        if (!G->getOffset()) {
-          Base = CurDAG->getTargetGlobalAddress(G->getGlobal(), Addr.getDebugLoc(), MVT::i32);
-          Offset = CurDAG->getTargetConstant(0, MVT::i32);
+        Base = CurDAG->getTargetGlobalAddress(G->getGlobal(),
+            Addr.getDebugLoc(), MVT::i32, G->getOffset());
+        Offset = CurDAG->getTargetConstant(0, MVT::i32);
 
-          return true;
-        }
+        return true;
       }
       break;
   }
