@@ -55,6 +55,9 @@ ARCompactTargetLowering::ARCompactTargetLowering(TargetMachine &TM)
   // SELECT is expanded to ???, SELECT_CC is lowered to a CMP and Bcc.
   setOperationAction(ISD::SELECT_CC,      MVT::i32,   Custom);
   setOperationAction(ISD::SELECT,         MVT::i32,   Expand);
+
+  // SETCC is expanded to ???
+  setOperationAction(ISD::SETCC,          MVT::i32,   Expand);
 }
 
 const char* ARCompactTargetLowering::getTargetNodeName(unsigned Opcode) const {
