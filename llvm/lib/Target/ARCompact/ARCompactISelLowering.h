@@ -37,6 +37,11 @@ namespace llvm {
       /// instruction.
       BR_CC,
 
+      /// SELECT_CC. Operand 0 and operand 1 are the lhs/rhs, operand 2 is the
+      /// true value, operand 3 is the false value, and operand 4 is the
+      /// condition code.
+      SELECT_CC,
+
       /// Wrapper - A wrapper node for TargetConstantPool, TargetExternalSymbol,
       /// and TargetGlobalAddress.
       Wrapper,
@@ -59,12 +64,12 @@ namespace llvm {
     /// described by the Ins array, into the specified DAG. The implementation
     /// should fill in the InVals array with legal-type argument values, and
     /// return the resulting token chain value.
-    virtual SDValue LowerFormalArguments(SDValue Chain, 
+    virtual SDValue LowerFormalArguments(SDValue Chain,
         CallingConv::ID CallConv, bool isVarArg,
-        const SmallVectorImpl<ISD::InputArg> &Ins, DebugLoc dl, 
+        const SmallVectorImpl<ISD::InputArg> &Ins, DebugLoc dl,
         SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const;
 
-    /// This hook must be implemented to lower outgoing return values, 
+    /// This hook must be implemented to lower outgoing return values,
     /// described by the Outs array, into the specified DAG. The implementation
     /// should return the resulting token chain value.
     virtual SDValue LowerReturn(SDValue Chain, CallingConv::ID CallConv,
@@ -78,16 +83,16 @@ namespace llvm {
     /// described by the Ins array. The implementation should fill in the
     /// InVals array with legal-type return values from the call, and return
     /// the resulting token chain value.
-    virtual SDValue LowerCall(SDValue Chain, SDValue Callee, 
-        CallingConv::ID CallConv, bool isVarArg, bool &isTailCall, 
-        const SmallVectorImpl<ISD::OutputArg> &Outs, 
+    virtual SDValue LowerCall(SDValue Chain, SDValue Callee,
+        CallingConv::ID CallConv, bool isVarArg, bool &isTailCall,
+        const SmallVectorImpl<ISD::OutputArg> &Outs,
         const SmallVectorImpl<SDValue> &OutVals,
-        const SmallVectorImpl<ISD::InputArg> &Ins, 
+        const SmallVectorImpl<ISD::InputArg> &Ins,
         DebugLoc dl, SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const;
 
     /// LowerCallResult - Lower the result values of an ISD::CALL into the
     /// appropriate copies out of appropriate physical registers.
-    SDValue LowerCallResult(SDValue Chain, SDValue InFlag,  
+    SDValue LowerCallResult(SDValue Chain, SDValue InFlag,
         CallingConv::ID CallConv, bool isVarArg,
         const SmallVectorImpl<ISD::InputArg> &Ins,
         DebugLoc dl, SelectionDAG &DAG,
@@ -95,11 +100,12 @@ namespace llvm {
 
     virtual EVT getSetCCResultType(EVT VT) const;
 
-    SDValue LowerSETCC(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerBR_CC(SDValue Op, SelectionDAG &DAG) const;
-    SDValue LowerSELECT(SDValue Op, SelectionDAG &DAG) const;
+    SDValue LowerSELECT_CC(SDValue Op, SelectionDAG &DAG) const;
     SDValue LowerGlobalAddress(SDValue Op, SelectionDAG &DAG) const;
 
+    MachineBasicBlock* EmitInstrWithCustomInserter(MachineInstr *MI,
+        MachineBasicBlock *BB) const;
   };
 } // end namespace llvm
 

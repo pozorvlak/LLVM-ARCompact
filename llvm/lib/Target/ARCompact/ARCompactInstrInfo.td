@@ -30,9 +30,9 @@ def SDT_ARCWrapper      : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>,
 def SDT_ARCCmp          : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def SDT_ARCBrCC         : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>,
                                                SDTCisVT<1, i32>]>;
-
-//===----------------------------------------------------------------------===//
-// ARCompact-specific node definitions.
+def SDT_ARCSelectCC     : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>,
+                                               SDTCisSameAs<1, 2>,
+                                               SDTCisVT<3, i32>]>;
 //===----------------------------------------------------------------------===//
 
 def ARCcall : SDNode<"ARCISD::CALL", SDT_ARCCall,
@@ -49,6 +49,7 @@ def ARCWrapper : SDNode<"ARCISD::Wrapper", SDT_ARCWrapper>;
 def ARCcmp     : SDNode<"ARCISD::CMP", SDT_ARCCmp, [SDNPOutGlue]>;
 def ARCbrcc    : SDNode<"ARCISD::BR_CC", SDT_ARCBrCC,
                         [SDNPHasChain, SDNPInGlue]>;
+def ARCselectcc : SDNode<"ARCISD::SELECT_CC", SDT_ARCSelectCC, [SDNPInGlue]>;
 
 // Models the return flag of a function.
 def ARCretflag : SDNode<"ARCISD::RET_FLAG", SDTNone,
@@ -163,6 +164,14 @@ let Defs = [SP], Uses = [SP] in {
   def ADJCALLSTACKUP   : Pseudo<(outs), (ins i32imm:$amt1, i32imm:$amt2),
                                 "#ADJCALLSTACKUP",
                                 [(ARCcallseq_end timm:$amt1, timm:$amt2)]>;
+}
+
+let usesCustomInserter = 1 in {
+  def Select : Pseudo<(outs CPURegs:$dst),
+                      (ins CPURegs:$src, CPURegs:$src2, cc:$cc),
+                      "; Select PSEUDO",
+                      [(set CPURegs:$dst,
+                       (ARCselectcc CPURegs:$src, CPURegs:$src2, imm:$cc))]>;
 }
 
 // Used to manually insert comments into the generated assembly.
