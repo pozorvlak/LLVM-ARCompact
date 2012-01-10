@@ -356,6 +356,26 @@ def LDlir : Pseudo<(outs CPURegs:$dst), (ins MEMlir:$addr),
                     "ld $dst,$addr",
                     [(set CPURegs:$dst, (load ADDRlir:$addr))]>;
 
+// Zero-extend versions of LDri.
+
+def LDri_extb : Pseudo<(outs CPURegs:$dst), (ins MEMri:$addr),
+                       "ldb $dst,$addr",
+                       [(set CPURegs:$dst, (zextloadi8 ADDRri:$addr))]>;
+
+def LDri_extw : Pseudo<(outs CPURegs:$dst), (ins MEMri:$addr),
+                       "ldw $dst,$addr",
+                       [(set CPURegs:$dst, (zextloadi16 ADDRri:$addr))]>;
+
+// Sign-extend versions of LDri.
+
+def LDri_sextb : Pseudo<(outs CPURegs:$dst), (ins MEMri:$addr),
+                        "ldbx $dst,$addr",
+                        [(set CPURegs:$dst, (sextloadi8 ADDRri:$addr))]>;
+
+def LDri_sextw : Pseudo<(outs CPURegs:$dst), (ins MEMri:$addr),
+                        "ldwx $dst,$addr",
+                        [(set CPURegs:$dst, (sextloadi16 ADDRri:$addr))]>;
+
 // LSR - Page 254.
 //    Logically shifts the source operand right, and places the result in the
 //    destination register. The shift amount can be a constant 1 (in the
@@ -517,11 +537,15 @@ defm XOR : GenPurposeInst<"xor", xor>;
 // ARCompact Non-Instruction Patterns.
 //===----------------------------------------------------------------------===//
 
-// GlobalAddress
+// GlobalAddress.
 def : Pat<(i32 (ARCWrapper tglobaladdr:$dst)), (MOVrli tglobaladdr:$dst)>;
 
 def : Pat<(add CPURegs:$src1, (ARCWrapper tglobaladdr:$src2)),
           (ADDrli CPURegs:$src1, tglobaladdr:$src2)>;
 
-// calls
+// Calls.
 def : Pat<(ARCcall (i32 tglobaladdr:$dst)), (BLi tglobaladdr:$dst)>;
+
+// Map integer extloads to zextloads.
+def : Pat<(i32 (extloadi8 ADDRri:$src)), (LDri_extb ADDRri:$src)>;
+def : Pat<(i32 (extloadi16 ADDRri:$src)), (LDri_extw ADDRri:$src)>;

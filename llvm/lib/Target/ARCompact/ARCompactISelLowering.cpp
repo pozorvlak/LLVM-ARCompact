@@ -41,10 +41,14 @@ ARCompactTargetLowering::ARCompactTargetLowering(TargetMachine &TM)
   // Do not have division, so int-division is expensive.
   setIntDivIsCheap(false);
 
+  // We don't have 1-bit extension (i.e. for bools).
+  setLoadExtAction(ISD::EXTLOAD,  MVT::i1,  Promote);
+  setLoadExtAction(ISD::SEXTLOAD, MVT::i1,  Promote);
+  setLoadExtAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
+
   setOperationAction(ISD::GlobalAddress,  MVT::i32,   Custom);
   setOperationAction(ISD::BR_CC,          MVT::i32,   Custom);
   setOperationAction(ISD::BRCOND,         MVT::Other, Expand);
-
 }
 
 const char* ARCompactTargetLowering::getTargetNodeName(unsigned Opcode) const {
