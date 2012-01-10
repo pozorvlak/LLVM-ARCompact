@@ -1,10 +1,10 @@
 //===--- ARCompactInstrInfo.td - Target Description for ARCompact Target --===//
-// 
+//
 //                     The LLVM Compiler Infrastructure
 //
 // This file is distributed under the University of Illinois Open Source
 // License. See LICENSE.TXT for details.
-// 
+//
 //===----------------------------------------------------------------------===//
 //
 // This file describes the ARCompact instructions in TableGen format.
@@ -37,17 +37,17 @@ def SDT_ARCBrCC         : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>,
 
 def ARCcall : SDNode<"ARCISD::CALL", SDT_ARCCall,
                      [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue, SDNPVariadic]>;
-def ARCcallseq_start : 
+def ARCcallseq_start :
     SDNode<"ISD::CALLSEQ_START", SDT_ARCCallSeqStart,
            [SDNPHasChain, SDNPOutGlue]>;
-def ARCcallseq_end : 
+def ARCcallseq_end :
     SDNode<"ISD::CALLSEQ_END", SDT_ARCCallSeqEnd,
            [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
 def ARCWrapper : SDNode<"ARCISD::Wrapper", SDT_ARCWrapper>;
 
 
 def ARCcmp     : SDNode<"ARCISD::CMP", SDT_ARCCmp, [SDNPOutGlue]>;
-def ARCbrcc    : SDNode<"ARCISD::BR_CC", SDT_ARCBrCC, 
+def ARCbrcc    : SDNode<"ARCISD::BR_CC", SDT_ARCBrCC,
                         [SDNPHasChain, SDNPInGlue]>;
 
 // Models the return flag of a function.
@@ -111,7 +111,7 @@ def brtarget : Operand<OtherVT>;
 // ARCompact Multi-Classes.
 //===----------------------------------------------------------------------===//
 
-// Captures ARCompact general purpose instructions, which have the following 
+// Captures ARCompact general purpose instructions, which have the following
 // types:
 //
 //   * Register1 = Register2 op Register3
@@ -132,7 +132,7 @@ multiclass GenPurposeInst<string opstring, SDNode OpNode> {
 
   // In the signed-immediate case, the source and destination registers must be
   // the same register, due to encoding constraints.
-  let Constraints = "$src1 = $dst" in { 
+  let Constraints = "$src1 = $dst" in {
     def rsi : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, i32imm:$src2),
                         !strconcat(opstring, " $dst,$src1,$src2"),
                         [(set CPURegs:$dst,
@@ -272,7 +272,7 @@ let isBarrier = 1, isBranch = 1, isTerminator = 1 in {
 }
 
 let isBranch = 1, isTerminator = 1, Uses = [STATUS32] in {
-    def BCC : Pseudo<(outs), (ins brtarget:$dst, cc:$cc), 
+    def BCC : Pseudo<(outs), (ins brtarget:$dst, cc:$cc),
                      "b$cc $dst",
                      [(ARCbrcc bb:$dst, imm:$cc)]>;
 } // Uses = [STATUS32]
@@ -296,7 +296,7 @@ let isCall = 1 in {
                        "bl $dst",
                        [(ARCcall imm:$dst)]>;
     def BLr : Pseudo<(outs), (ins CPURegs:$dst, variable_ops),
-                       "bl $dst", 
+                       "bl $dst",
                        [(ARCcall CPURegs:$dst)]>;
   }
 }
@@ -387,8 +387,8 @@ def LSRlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
 // MOV - Page 262.
 //    The contents of the source are moved into the destination register.
 
-// No pattern is defined for register-to-register moves, as LLVM is unable to 
-// match them. Instead, copyPhysReg in ARCompactInstrInfo.cpp is responsible 
+// No pattern is defined for register-to-register moves, as LLVM is unable to
+// match them. Instead, copyPhysReg in ARCompactInstrInfo.cpp is responsible
 // for emitting this instruction when appropriate.
 let neverHasSideEffects = 1 in {
   def MOVrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
@@ -444,13 +444,35 @@ defm OR : GenPurposeInst<"or", or>;
 
 // SBC - page 302.
 //    Subtracts the second source operand from the first, and then also
-//    subtracts the carry from this value. The result is placed in the 
+//    subtracts the carry from this value. The result is placed in the
 //    destination register.
 
 // TODO: Does this actually use STATUS32?
 let Uses = [STATUS32] in {
     defm SBC : GenPurposeInst<"sbc", sube>;
 }
+
+// SEXB - page 304.
+//    Sign extends the byte contained in the source operand to the most
+//    significant bit in a long word (32-bits) and places the result in
+//    the destination register.
+
+def SEXBrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
+                    "sexb $dst,$src",
+                    [(set CPURegs:$dst, (sext_inreg CPURegs:$src, i8))]>;
+
+// TODO: Sign-extend an unsigned 6-bit immediate, and a limm.
+
+// SEXW - page 304.
+//    Sign extends the word (16-bits) contained in the source operand to the
+//    most significant bit in a long word (32-bits) and places the result in
+//    the destination register.
+
+def SEXWrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
+                    "sexw $dst,$src",
+                    [(set CPURegs:$dst, (sext_inreg CPURegs:$src, i16))]>;
+
+// TODO: Sign-extend an unsigned 6-bit immediate, and a limm.
 
 // ST - page 310.
 //    Stores the value stored in the source operand in the destination memory
