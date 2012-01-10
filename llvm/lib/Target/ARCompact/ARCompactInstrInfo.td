@@ -185,9 +185,10 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
 //    Add two source operands together, along with the carry value, and place
 //    the result in the destination register.
 
-// TODO: Does this actually use STATUS32?
-let Uses = [STATUS32] in {
-    defm ADC : GenPurposeInst<"adc", adde>;
+// TODO: Also model the case where the carry is used but not generated
+//       (i.e. not adde).
+let Defs = [STATUS32], Uses = [STATUS32] in {
+    defm ADC : GenPurposeInst<"adc.f", adde>;
 }
 
 // ADD - Page 180.
@@ -195,6 +196,14 @@ let Uses = [STATUS32] in {
 //    register.
 
 defm ADD : GenPurposeInst<"add", add>;
+
+// Carry-producing versions.
+let Defs = [STATUS32] in {
+  def ADDrr_f : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, CPURegs:$src2),
+                       "add.f $dst,$src1,$src2",
+                       [(set CPURegs:$dst,
+                            (addc CPURegs:$src1, CPURegs:$src2))]>;
+}
 
 // AND - Page 191.
 //    Takes the logical bitwise AND of two source operands, and places the
@@ -467,9 +476,10 @@ defm OR : GenPurposeInst<"or", or>;
 //    subtracts the carry from this value. The result is placed in the
 //    destination register.
 
-// TODO: Does this actually use STATUS32?
-let Uses = [STATUS32] in {
-    defm SBC : GenPurposeInst<"sbc", sube>;
+// TODO: Also model the case where the carry is used but not generated
+//       (i.e. not sube).
+let Defs = [STATUS32], Uses = [STATUS32] in {
+    defm SBC : GenPurposeInst<"sbc.f", sube>;
 }
 
 // SEXB - page 304.
@@ -536,6 +546,14 @@ defm SUB : GenPurposeInst<"sub", sub>;
 def SUBlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
                       "sub $dst,$src1,$src2",
                       [(set CPURegs:$dst, (sub limm32:$src1, CPURegs:$src2))]>;
+
+// Carry-producing versions.
+let Defs = [STATUS32] in {
+  def SUBrr_f : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, CPURegs:$src2),
+                       "sub.f $dst,$src1,$src2",
+                       [(set CPURegs:$dst,
+                            (subc CPURegs:$src1, CPURegs:$src2))]>;
+}
 
 // XOR - page 332.
 //    Takes the logical bitwise XOR of the source operands, and places the
