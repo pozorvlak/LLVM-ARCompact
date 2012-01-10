@@ -369,11 +369,11 @@ def LDri_extw : Pseudo<(outs CPURegs:$dst), (ins MEMri:$addr),
 // Sign-extend versions of LDri.
 
 def LDri_sextb : Pseudo<(outs CPURegs:$dst), (ins MEMri:$addr),
-                        "ldbx $dst,$addr",
+                        "ldb.x $dst,$addr",
                         [(set CPURegs:$dst, (sextloadi8 ADDRri:$addr))]>;
 
 def LDri_sextw : Pseudo<(outs CPURegs:$dst), (ins MEMri:$addr),
-                        "ldwx $dst,$addr",
+                        "ldw.x $dst,$addr",
                         [(set CPURegs:$dst, (sextloadi16 ADDRri:$addr))]>;
 
 // LSR - Page 254.
@@ -515,6 +515,16 @@ def STrli : Pseudo<(outs), (ins MEMli:$addr, CPURegs:$src),
 def STliri : Pseudo<(outs), (ins MEMri:$addr, i32imm:$src),
                     "st $src,$addr",
                     [(store limm32:$src, ADDRri:$addr)]>;
+
+// Truncuated versions of STrri.
+
+def STrri_i8 : Pseudo<(outs), (ins MEMri:$addr, CPURegs:$src),
+                      "stb $src,$addr",
+                      [(truncstorei8 CPURegs:$src, ADDRri:$addr)]>;
+
+def STrri_i16 : Pseudo<(outs), (ins MEMri:$addr, CPURegs:$src),
+                      "stw $src,$addr",
+                      [(truncstorei16 CPURegs:$src, ADDRri:$addr)]>;
 
 // SUB - Page 312.
 //    Subtracts the second source operand from the first, and places the result
