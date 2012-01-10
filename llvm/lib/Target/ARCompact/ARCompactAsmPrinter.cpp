@@ -110,6 +110,9 @@ void ARCompactAsmPrinter::printCCOperand(const MachineInstr *MI, int OpNum,
     case ARCCC::COND_GT:
       O << "gt";
       break;
+    case ARCCC::COND_LE:
+      O << "le";
+      break;
     default:
       assert(0 && "Unsupported CC code");
       break;
