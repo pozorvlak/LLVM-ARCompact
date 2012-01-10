@@ -84,7 +84,7 @@ bool ARCompactInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
       return true;
 
     // Handle unconditional branches.
-    if (I->getOpcode() == ARC::BRANCH) {
+    if (I->getOpcode() == ARC::B) {
       // If we can modify the branch, there are multiple optimisations
       // we can apply.
       if (AllowModify) {

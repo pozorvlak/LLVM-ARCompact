@@ -266,9 +266,9 @@ def ASRlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
 
 // An unconditional branch.
 let isBarrier = 1, isBranch = 1, isTerminator = 1 in {
-    def BRANCH : Pseudo<(outs), (ins brtarget:$dst),
-                        "b $dst",
-                        [(br bb:$dst)]>;
+    def B : Pseudo<(outs), (ins brtarget:$dst),
+                   "b $dst",
+                   [(br bb:$dst)]>;
 }
 
 let isBranch = 1, isTerminator = 1, Uses = [STATUS32] in {
