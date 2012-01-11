@@ -182,7 +182,7 @@ def NOP : Pseudo<(outs), (ins), "mov 0,0", []>;
 
 // A return is modelled as an explicit jump from BLINK.
 let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
-    def RET : Pseudo<(outs), (ins), "j.d [blink]", [(ARCretflag)]>;
+    def RET : Pseudo<(outs), (ins), "j [blink]", [(ARCretflag)]>;
 }
 
 

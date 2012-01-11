@@ -158,11 +158,11 @@ void ARCompactFrameLowering::emitPrologue(MachineFunction &MF) const {
   // TODO: Allocate space for variadic function arguments.
 
   // Save the return address register, if necessary
-  if (MRI.isLiveIn(ARC::BLINK) || MRI.isLiveOut(ARC::BLINK)) {
-    BuildMI(MBB, MBBI, dl, TII.get(ARC::SUBrui), ARC::SP).addReg(ARC::SP)
-        .addImm(UNITS_PER_WORD);
+  if (MFI->adjustsStack()) {
     BuildMI(MBB, MBBI, dl, TII.get(ARC::STrri)).addReg(ARC::SP)
         .addImm(-UNITS_PER_WORD).addReg(ARC::BLINK);
+    BuildMI(MBB, MBBI, dl, TII.get(ARC::SUBrui), ARC::SP).addReg(ARC::SP)
+        .addImm(UNITS_PER_WORD);
   }
 
   // TODO: Create the register save area, and save the required registers to it.
@@ -247,25 +247,14 @@ void ARCompactFrameLowering::emitEpilogue(MachineFunction &MF,
       .addImm(-UNITS_PER_WORD);
 
   // Restore the return address register, if needed.
-  if (MRI.isLiveIn(ARC::BLINK) || MRI.isLiveOut(ARC::BLINK)) {
+  if (MFI->adjustsStack()) {
     BuildMI(MBB, MBBI, dl, TII.get(ARC::ADDrsi), ARC::SP).addReg(ARC::SP)
         .addImm(UNITS_PER_WORD);
     BuildMI(MBB, MBBI, dl, TII.get(ARC::LDri)).addReg(ARC::SP)
         .addReg(ARC::BLINK).addImm(-UNITS_PER_WORD);
   }
 
-  // TODO: Is it okay to have LD/ST in the delay slot?
-  // Move jump before the final non-jump isntruction, as the
-  // jump has a delay slot.
-  MachineBasicBlock::iterator BeforeDelayInstr = MBBI;
-  MachineBasicBlock::iterator AfterDelayInstr = MBBI;
-  BeforeDelayInstr--;
-  MBB.splice(BeforeDelayInstr, &MBB, AfterDelayInstr);
-
   // End of epilogue comment.
-  // For some reason, the MBBI ends up 2 instructions behind after the splice.
-  // I am probably doing the splice wrong but this hack works.
-  MBBI++;
   MBBI++;
   MDNode* end_epilogue_mdnode = MDNode::get(getGlobalContext(),
       ArrayRef<Value*>(MDString::get(getGlobalContext(), "EPILOGUE END")));
