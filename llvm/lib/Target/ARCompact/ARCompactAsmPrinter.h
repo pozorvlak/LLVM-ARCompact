@@ -40,7 +40,8 @@ public:
   /// printOperand, printMemOperand, ... etc.
   void printInstruction(const MachineInstr *MI, raw_ostream &OS);
 
-  void printOperand(const MachineInstr *MI, int opNum, raw_ostream &OS);
+  void printOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
+      const char* Modifier = 0);
   void printMemOperand(const MachineInstr *MI, int opNum, raw_ostream &OS,
      const char *Modifier = 0);
   void printCCOperand(const MachineInstr *MI, int OpNum, raw_ostream &O);

@@ -23,7 +23,7 @@ using namespace llvm;
 
 // Prints a basic operand, such as a register or an immediate.
 void ARCompactAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
-    raw_ostream &O) {
+    raw_ostream &O, const char* Modifier) {
   const MachineOperand &MO = MI->getOperand (opNum);
   switch (MO.getType()) {
     // A register.
@@ -42,12 +42,14 @@ void ARCompactAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
       return;
 
     // A global address.
-    case MachineOperand::MO_GlobalAddress:
+    // TODO: Should a "@" be printed in front of these?
+    case MachineOperand::MO_GlobalAddress: 
       O << *Mang->getSymbol(MO.getGlobal());
       break;
 
     // An external symbol.
     case MachineOperand::MO_ExternalSymbol:
+      llvm_unreachable("external_symbol");
       O << MO.getSymbolName();
       break;
 
