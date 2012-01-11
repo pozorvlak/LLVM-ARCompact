@@ -67,21 +67,28 @@ void ARCompactInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
 bool ARCompactInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
     MachineBasicBlock *&TBB, MachineBasicBlock *&FBB,
     SmallVectorImpl<MachineOperand> &Cond, bool AllowModify) const {
-  // Only handle the unconditional case at the moment, to eliminate
-  // wasteful code.
-
   // Start from the bottom of the block and work up, examining the
   // terminator instructions.
   MachineBasicBlock::iterator I = MBB.end();
   while (I != MBB.begin()) {
     --I;
-    if (I->isDebugValue())
+
+    // TODO: Check for metadata?
+    if (I->isDebugValue()) {
       continue;
+    }
+
+    // Working from the bottom, when we see a non-terminator
+    // instruction, we're done.
+    if (!I->getDesc().isTerminator()) {
+      break;
+    }
 
     // A terminator that isn't a branch can't easily be handled
     // by this analysis.
-    if (!I->getDesc().isBranch())
+    if (!I->getDesc().isBranch()) {
       return true;
+    }
 
     // Handle unconditional branches.
     if (I->getOpcode() == ARC::B) {
@@ -108,8 +115,46 @@ bool ARCompactInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
           continue;
         }
       }
-      // TBB is used to indicate the unconditinal destination.
+
+      // TBB is used to indicate the unconditional destination. If there is
+      // a preceding conditional branch, this will be moved to FBB then.
       TBB = I->getOperand(0).getMBB();
+      continue;
+    }
+
+    // Handle conditional branches.
+    assert(I->getOpcode() == ARC::BCC && "Invalid branch");
+    ARCCC::CondCodes BranchCode =
+        static_cast<ARCCC::CondCodes>(I->getOperand(1).getImm());
+
+    if (BranchCode == ARCCC::COND_INVALID) {
+      return true;  // Can't handle weird stuff, so just fail.
+    }
+
+    // Cond is empty only for the first conditional branch.
+    if (Cond.empty()) {
+      // A successor unconditional branch may have set TBB, so move it to FBB.
+      FBB = TBB;
+      TBB = I->getOperand(0).getMBB();
+      Cond.push_back(MachineOperand::CreateImm(BranchCode));
+      continue;
+    }
+
+    // Handle subsequent conditional branches.
+    assert(Cond.size() == 1);
+    assert(TBB);
+
+    // Only handle the case where all conditional branches branch to
+    // the same destination.
+    // TODO: Why?
+    if (TBB != I->getOperand(0).getMBB()) {
+      return true;
+    }
+
+    ARCCC::CondCodes OldBranchCode = (ARCCC::CondCodes) Cond[0].getImm();
+    // If both branches have the same conditions, we can leave them alone.
+    // TODO: Why? When does this happen?
+    if (OldBranchCode == BranchCode) {
       continue;
     }
 
@@ -144,5 +189,28 @@ unsigned ARCompactInstrInfo::InsertBranch(MachineBasicBlock &MBB,
     BuildMI(&MBB, DL, get(ARC::B)).addMBB(FBB);
     ++Count;
   }
+  return Count;
+}
+
+unsigned ARCompactInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
+  MachineBasicBlock::iterator I = MBB.end();
+  unsigned Count = 0;
+
+  while (I != MBB.begin()) {
+    --I;
+
+    // A non-branch instruction, so we are finished.
+    // TODO: Test for debug/metadata?
+    if (I->getOpcode() != ARC::B &&
+        I->getOpcode() != ARC::BCC) {
+      break;
+    }
+
+    // Remove the branch.
+    I->eraseFromParent();
+    I = MBB.end();
+    ++Count;
+  }
+
   return Count;
 }

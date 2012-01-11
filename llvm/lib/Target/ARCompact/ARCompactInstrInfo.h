@@ -85,6 +85,10 @@ public:
       MachineBasicBlock *FBB, const SmallVectorImpl<MachineOperand> &Cond,
       DebugLoc DL) const;
 
+  /// Remove the branching code at the end of the specific MachineBasicBlock.
+  /// Returns the number of instructions that were removed.
+  unsigned RemoveBranch(MachineBasicBlock &MBB) const;
+
   /// Returns the RegisterInfo for the Target.
   virtual const ARCompactRegisterInfo &getRegisterInfo() const {
     return RI;
