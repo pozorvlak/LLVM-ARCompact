@@ -37,14 +37,15 @@ void ARCompactAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
       break;
 
     // An entire basic block.
+    // TODO: Should a "@" be printed in front of these?
     case MachineOperand::MO_MachineBasicBlock:
-      O << *MO.getMBB()->getSymbol();
+      O << "@" << *MO.getMBB()->getSymbol();
       return;
 
     // A global address.
     // TODO: Should a "@" be printed in front of these?
     case MachineOperand::MO_GlobalAddress: 
-      O << *Mang->getSymbol(MO.getGlobal());
+      O << "@" << *Mang->getSymbol(MO.getGlobal());
       break;
 
     // An external symbol.
