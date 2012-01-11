@@ -79,6 +79,11 @@ public:
       MachineBasicBlock *&FBB, SmallVectorImpl<MachineOperand> &Cond,
       bool AllowModify) const;
 
+  /// Insert branch code into the end of the specified MachineBasicBlock.
+  /// Returns the number of branch instructions inserted.
+  unsigned InsertBranch(MachineBasicBlock &MBB, MachineBasicBlock *TBB,
+      MachineBasicBlock *FBB, const SmallVectorImpl<MachineOperand> &Cond,
+      DebugLoc DL) const;
 
   /// Returns the RegisterInfo for the Target.
   virtual const ARCompactRegisterInfo &getRegisterInfo() const {

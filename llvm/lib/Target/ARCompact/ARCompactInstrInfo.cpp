@@ -120,3 +120,29 @@ bool ARCompactInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
 
   return false; // Success!
 }
+
+unsigned ARCompactInstrInfo::InsertBranch(MachineBasicBlock &MBB,
+    MachineBasicBlock *TBB, MachineBasicBlock *FBB,
+    const SmallVectorImpl<MachineOperand> &Cond, DebugLoc DL) const {
+  // There is no point inserting a branch for a fallthrough.
+  assert(TBB && "InsertBranch must not be told to insert a fallthrough");
+
+  if (Cond.empty()) {
+    // Should be an unconditional branch.
+    assert(!FBB && "Unconditional branch with multiple successors!");
+    BuildMI(&MBB, DL, get(ARC::B)).addMBB(TBB);
+    return 1;
+  }
+
+  // Conditional branch.
+  unsigned Count = 0;
+  BuildMI(&MBB, DL, get(ARC::BCC)).addMBB(TBB).addImm(Cond[0].getImm());
+  ++Count;
+  
+  if (FBB) {
+    // Two-way Conditional branch. Insert the second branch.
+    BuildMI(&MBB, DL, get(ARC::B)).addMBB(FBB);
+    ++Count;
+  }
+  return Count;
+}
