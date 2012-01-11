@@ -137,7 +137,6 @@ void ARCompactFrameLowering::emitPrologue(MachineFunction &MF) const {
   MachineBasicBlock &MBB = MF.front();
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo  *MFI = MF.getFrameInfo();
-  MachineRegisterInfo &MRI = MF.getRegInfo();
   const ARCompactInstrInfo &TII =
       *static_cast<const ARCompactInstrInfo*>(MF.getTarget().getInstrInfo());
 
@@ -196,7 +195,6 @@ void ARCompactFrameLowering::emitEpilogue(MachineFunction &MF,
   /* This code adapted from GCC and other llvm backends. */
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   MachineFrameInfo  *MFI = MF.getFrameInfo();
-  MachineRegisterInfo &MRI = MF.getRegInfo();
   const ARCompactInstrInfo &TII =
       *static_cast<const ARCompactInstrInfo*>(MF.getTarget().getInstrInfo());
 
