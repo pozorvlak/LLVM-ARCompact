@@ -48,6 +48,11 @@ ARCompactTargetLowering::ARCompactTargetLowering(TargetMachine &TM)
 
   setOperationAction(ISD::GlobalAddress,  MVT::i32,   Custom);
 
+  // Expand non-supported branches.
+  // TODO: Check if these can be supported.
+  setOperationAction(ISD::BR_JT,          MVT::Other, Expand);
+  setOperationAction(ISD::BRIND,          MVT::Other, Expand);
+
   // BRCOND is expanded to ???, BR_CC is lowered to a CMP and Bcc.
   setOperationAction(ISD::BR_CC,          MVT::i32,   Custom);
   setOperationAction(ISD::BRCOND,         MVT::Other, Expand);
