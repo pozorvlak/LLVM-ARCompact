@@ -46,7 +46,7 @@ void ARCompactInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
   DebugLoc DL;
   if (MI != MBB.end()) DL = MI->getDebugLoc();
 
-  BuildMI(MBB, MI, DL, get(ARC::STrli))
+  BuildMI(MBB, MI, DL, get(ARC::STrri))
       .addFrameIndex(FrameIdx).addImm(0)
       .addReg(SrcReg, getKillRegState(isKill));
 }
