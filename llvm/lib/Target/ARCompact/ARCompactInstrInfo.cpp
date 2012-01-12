@@ -29,8 +29,8 @@
 using namespace llvm;
 
 ARCompactInstrInfo::ARCompactInstrInfo(ARCompactSubtarget &ST)
-  : ARCompactGenInstrInfo(ARC::ADJCALLSTACKDOWN, ARC::ADJCALLSTACKUP),
-    RI(ST, *this), Subtarget(ST) {
+    : ARCompactGenInstrInfo(ARC::ADJCALLSTACKDOWN, ARC::ADJCALLSTACKUP),
+      RI(ST, *this), Subtarget(ST) {
 }
 
 void ARCompactInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
@@ -40,11 +40,9 @@ void ARCompactInstrInfo::copyPhysReg(MachineBasicBlock &MBB,
       .addReg(SrcReg, getKillRegState(KillSrc));
 }
 
-#include <iostream>
 void ARCompactInstrInfo::storeRegToStackSlot(MachineBasicBlock &MBB,
     MachineBasicBlock::iterator MI, unsigned SrcReg, bool isKill, int FrameIdx,
     const TargetRegisterClass *RC, const TargetRegisterInfo *TRI) const {
-  std::cerr << "LOLOLOLLOLOLOL" << std::endl;
   DebugLoc DL;
   if (MI != MBB.end()) DL = MI->getDebugLoc();
 
@@ -64,6 +62,10 @@ void ARCompactInstrInfo::loadRegFromStackSlot(MachineBasicBlock &MBB,
       .addFrameIndex(FrameIdx).addImm(0);
 }
 
+static bool IsComment(MachineInstr* I) {
+  return  I->getNumOperands() == 1 && I->getOperand(0).isMetadata();
+}
+
 bool ARCompactInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
     MachineBasicBlock *&TBB, MachineBasicBlock *&FBB,
     SmallVectorImpl<MachineOperand> &Cond, bool AllowModify) const {
@@ -73,14 +75,14 @@ bool ARCompactInstrInfo::AnalyzeBranch(MachineBasicBlock &MBB,
   while (I != MBB.begin()) {
     --I;
 
-    // TODO: Check for metadata?
-    if (I->isDebugValue()) {
+    if (I->isDebugValue() | IsComment(I)) {
       continue;
     }
 
     // Working from the bottom, when we see a non-terminator
     // instruction, we're done.
-    if (!I->getDesc().isTerminator()) {
+    // TODO: Delay slots?
+    if (!isUnpredicatedTerminator(I)) {
       break;
     }
 
@@ -183,7 +185,7 @@ unsigned ARCompactInstrInfo::InsertBranch(MachineBasicBlock &MBB,
   unsigned Count = 0;
   BuildMI(&MBB, DL, get(ARC::BCC)).addMBB(TBB).addImm(Cond[0].getImm());
   ++Count;
-  
+
   if (FBB) {
     // Two-way Conditional branch. Insert the second branch.
     BuildMI(&MBB, DL, get(ARC::B)).addMBB(FBB);
