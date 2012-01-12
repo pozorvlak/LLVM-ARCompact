@@ -50,8 +50,7 @@ void ARCompactAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
 
     // An external symbol.
     case MachineOperand::MO_ExternalSymbol:
-      llvm_unreachable("external_symbol");
-      O << MO.getSymbolName();
+      O << "@" << MO.getSymbolName();
       break;
 
     // A comment.
