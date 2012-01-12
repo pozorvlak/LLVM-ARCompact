@@ -143,7 +143,7 @@ void ARCompactFrameLowering::emitPrologue(MachineFunction &MF) const {
   }
 
   // End of prologue comment.
-  EmitComment(MBB, MBBI, dl, TII, "END PROLOGUE");
+  EmitComment(MBB, MBBI, dl, TII, "PROLOGUE END");
 }
 
 void ARCompactFrameLowering::emitEpilogue(MachineFunction &MF,
@@ -163,7 +163,7 @@ void ARCompactFrameLowering::emitEpilogue(MachineFunction &MF,
       "Can only put epilogue before a return instruction!");
 
   // Start of epilogue comment.
-  EmitComment(MBB, MBBI, dl, TII, "START EPILOGUE");
+  EmitComment(MBB, MBBI, dl, TII, "EPILOGUE START");
 
   // The stack size should be 4-byte aligned.
   unsigned NumBytes = MFI->getStackSize();
@@ -194,7 +194,7 @@ void ARCompactFrameLowering::emitEpilogue(MachineFunction &MF,
 
   // End of epilogue comment.
   MBBI++;
-  EmitComment(MBB, MBBI, dl, TII, "END EPILOGUE");
+  EmitComment(MBB, MBBI, dl, TII, "EPILOGUE END");
 }
 
 bool ARCompactFrameLowering::hasFP(const MachineFunction &MF) const {
