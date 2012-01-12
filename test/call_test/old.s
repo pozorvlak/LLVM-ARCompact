@@ -15,8 +15,8 @@ f:                                      ; @f
 	; EPILOGUE START
 	add sp,sp,4
 	add sp,sp,4
-	j.d [blink]
 	ld fp,[sp,-4]
+	j [blink]
 	; EPILOGUE END
 .tmp0:
 	.size	f, .tmp0-f
@@ -26,6 +26,8 @@ f:                                      ; @f
 g:                                      ; @g
 ; BB#0:
 	; PROLOGUE START
+	st blink,[sp,-4]
+	sub sp,sp,4
 	st fp,[sp,-4]
 	sub sp,sp,4
 	mov fp,sp
@@ -33,12 +35,14 @@ g:                                      ; @g
 	; PROLOGUE END
 	st 2,[fp,-4]
 	mov r0,2
-	bl f
+	bl @f
 	; EPILOGUE START
 	add sp,sp,4
 	add sp,sp,4
-	j.d [blink]
 	ld fp,[sp,-4]
+	add sp,sp,4
+	ld sp,[blink,-4]
+	j [blink]
 	; EPILOGUE END
 .tmp1:
 	.size	g, .tmp1-g
@@ -48,6 +52,8 @@ g:                                      ; @g
 main:                                   ; @main
 ; BB#0:
 	; PROLOGUE START
+	st blink,[sp,-4]
+	sub sp,sp,4
 	st fp,[sp,-4]
 	sub sp,sp,4
 	mov fp,sp
@@ -55,15 +61,17 @@ main:                                   ; @main
 	; PROLOGUE END
 	st 0,[fp,-4]
 	st 5,[fp,-8]
-	bl g
+	bl @g
 	st r0,[fp,-12]
 	ld r1,[fp,-8]
 	add r0,r1,r0
 	; EPILOGUE START
 	add sp,sp,12
 	add sp,sp,4
-	j.d [blink]
 	ld fp,[sp,-4]
+	add sp,sp,4
+	ld sp,[blink,-4]
+	j [blink]
 	; EPILOGUE END
 .tmp2:
 	.size	main, .tmp2-main

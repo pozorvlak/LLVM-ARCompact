@@ -19,8 +19,8 @@ f:                                      ; @f
 	; EPILOGUE START
 	add sp,sp,16
 	add sp,sp,4
-	j.d [blink]
 	ld fp,[sp,-4]
+	j [blink]
 	; EPILOGUE END
 .tmp0:
 	.size	f, .tmp0-f
@@ -40,8 +40,8 @@ main:                                   ; @main
 	; EPILOGUE START
 	add sp,sp,4
 	add sp,sp,4
-	j.d [blink]
 	ld fp,[sp,-4]
+	j [blink]
 	; EPILOGUE END
 .tmp1:
 	.size	main, .tmp1-main
