@@ -27,7 +27,7 @@ namespace llvm {
 
 class ARCompactTargetMachine : public LLVMTargetMachine {
   ARCompactSubtarget Subtarget;
-  const TargetData DataLayout;       // Calculates type size & alignment
+  const TargetData DataLayout;
   ARCompactTargetLowering TLInfo;
   ARCompactSelectionDAGInfo TSInfo;
   ARCompactInstrInfo InstrInfo;
@@ -37,11 +37,13 @@ public:
                      StringRef CPU, StringRef FS,
                      Reloc::Model RM, CodeModel::Model CM);
 
-  virtual const ARCompactInstrInfo *getInstrInfo() const { return &InstrInfo; }
-  virtual const TargetFrameLowering  *getFrameLowering() const {
+  virtual const ARCompactInstrInfo *getInstrInfo() const {
+    return &InstrInfo;
+  }
+  virtual const TargetFrameLowering *getFrameLowering() const {
     return &FrameLowering;
   }
-  virtual const ARCompactSubtarget   *getSubtargetImpl() const {
+  virtual const ARCompactSubtarget *getSubtargetImpl() const {
     return &Subtarget;
   }
   virtual const ARCompactRegisterInfo *getRegisterInfo() const {
@@ -53,14 +55,15 @@ public:
   virtual const ARCompactSelectionDAGInfo* getSelectionDAGInfo() const {
     return &TSInfo;
   }
-  virtual const TargetData       *getTargetData() const { return &DataLayout; }
+  virtual const TargetData *getTargetData() const {
+    return &DataLayout;
+  }
 
   // Pass Pipeline Configuration
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
-  virtual bool addPreEmitPass(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
 };
 
-// Encore processor.
+// The Encore processor.
 class ARCompactEncoreTargetMachine : public ARCompactTargetMachine {
 public:
   ARCompactEncoreTargetMachine(const Target &T, StringRef TT,

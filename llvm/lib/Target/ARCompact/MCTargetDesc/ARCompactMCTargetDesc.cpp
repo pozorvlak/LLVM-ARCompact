@@ -62,7 +62,7 @@ extern "C" void LLVMInitializeARCompactTargetMC() {
 
   // Register the MC codegen info.
   TargetRegistry::RegisterMCCodeGenInfo(TheARCompactEncoreTarget,
-                                       createARCompactMCCodeGenInfo);
+      createARCompactMCCodeGenInfo);
 
   // Register the MC instruction info.
   TargetRegistry::RegisterMCInstrInfo(TheARCompactEncoreTarget,
@@ -74,5 +74,5 @@ extern "C" void LLVMInitializeARCompactTargetMC() {
 
   // Register the MC subtarget info.
   TargetRegistry::RegisterMCSubtargetInfo(TheARCompactEncoreTarget,
-                                          createARCompactMCSubtargetInfo);
+      createARCompactMCSubtargetInfo);
 }

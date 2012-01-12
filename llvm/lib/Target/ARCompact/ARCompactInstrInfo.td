@@ -21,39 +21,49 @@ include "ARCompactInstrFormats.td"
 // Type Profiles.
 //===----------------------------------------------------------------------===//
 
-def SDT_ARCCall : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
+// Call-related.
+def SDT_ARCCall         : SDTypeProfile<0, -1, [SDTCisVT<0, iPTR>]>;
 def SDT_ARCCallSeqStart : SDCallSeqStart<[SDTCisVT<0, i32>]>;
 def SDT_ARCCallSeqEnd   : SDCallSeqEnd<[SDTCisVT<0, i32>, SDTCisVT<1, i32>]>;
+
+// Wrapper for Global Addresses etc.
 def SDT_ARCWrapper      : SDTypeProfile<1, 1, [SDTCisSameAs<0, 1>,
                                                SDTCisPtrTy<0>]>;
-
+// Compare, branch and select.
 def SDT_ARCCmp          : SDTypeProfile<0, 2, [SDTCisSameAs<0, 1>]>;
 def SDT_ARCBrCC         : SDTypeProfile<0, 2, [SDTCisVT<0, OtherVT>,
                                                SDTCisVT<1, i32>]>;
 def SDT_ARCSelectCC     : SDTypeProfile<1, 3, [SDTCisSameAs<0, 1>,
                                                SDTCisSameAs<1, 2>,
                                                SDTCisVT<3, i32>]>;
+
+//===----------------------------------------------------------------------===//
+// ARCompact-specific node definitions.
 //===----------------------------------------------------------------------===//
 
-def ARCcall : SDNode<"ARCISD::CALL", SDT_ARCCall,
-                     [SDNPHasChain, SDNPOutGlue, SDNPOptInGlue, SDNPVariadic]>;
+// Call-related.
+def ARCcall :
+    SDNode<"ARCISD::CALL", SDT_ARCCall, [SDNPHasChain, SDNPOutGlue,
+                                         SDNPOptInGlue, SDNPVariadic]>;
 def ARCcallseq_start :
-    SDNode<"ISD::CALLSEQ_START", SDT_ARCCallSeqStart,
-           [SDNPHasChain, SDNPOutGlue]>;
+    SDNode<"ISD::CALLSEQ_START", SDT_ARCCallSeqStart, [SDNPHasChain,
+                                                       SDNPOutGlue]>;
 def ARCcallseq_end :
-    SDNode<"ISD::CALLSEQ_END", SDT_ARCCallSeqEnd,
-           [SDNPHasChain, SDNPOptInGlue, SDNPOutGlue]>;
+    SDNode<"ISD::CALLSEQ_END", SDT_ARCCallSeqEnd, [SDNPHasChain, SDNPOptInGlue,
+                                                   SDNPOutGlue]>;
+
+// Wrapper for Global Addresses etc.
 def ARCWrapper : SDNode<"ARCISD::Wrapper", SDT_ARCWrapper>;
 
-
-def ARCcmp     : SDNode<"ARCISD::CMP", SDT_ARCCmp, [SDNPOutGlue]>;
-def ARCbrcc    : SDNode<"ARCISD::BR_CC", SDT_ARCBrCC,
-                        [SDNPHasChain, SDNPInGlue]>;
+// Compare, branch, and select.
+def ARCcmp      : SDNode<"ARCISD::CMP", SDT_ARCCmp, [SDNPOutGlue]>;
+def ARCbrcc     : SDNode<"ARCISD::BR_CC", SDT_ARCBrCC, [SDNPHasChain,
+                                                        SDNPInGlue]>;
 def ARCselectcc : SDNode<"ARCISD::SELECT_CC", SDT_ARCSelectCC, [SDNPInGlue]>;
 
-// Models the return flag of a function.
-def ARCretflag : SDNode<"ARCISD::RET_FLAG", SDTNone,
-                        [SDNPHasChain, SDNPOptInGlue]>;
+// The return flag for a function.
+def ARCretflag : SDNode<"ARCISD::RET_FLAG", SDTNone, [SDNPHasChain,
+                                                      SDNPOptInGlue]>;
 
 //===----------------------------------------------------------------------===//
 // ARCompact Complex Pattern Definitions.
@@ -78,34 +88,43 @@ def ADDRlir : ComplexPattern<i32, 2, "SelectADDRlir", [frameindex], []>;
 //===----------------------------------------------------------------------===//
 
 // Memory addressing operands.
-def MEMri : Operand<i32> {  // Register + signed immediate.
+
+// Register + signed immediate.
+def MEMri : Operand<i32> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops CPURegs, simm9);
 }
-def MEMli : Operand<i32> {  // Long immediate.
+
+// Long immediate.
+def MEMli : Operand<i32> {
   let PrintMethod = "printMemOperand";
   let MIOperandInfo = (ops limm32);
 }
-def MEMrr : Operand<i32> {  // Register + register.
+
+// Register + register.
+def MEMrr : Operand<i32> {
   let PrintMethod = "printMemOperand";
-    let MIOperandInfo = (ops CPURegs, CPURegs);
-}
-def MEMrli : Operand<i32> {  // Register + long immediate.
-  let PrintMethod = "printMemOperand";
-    let MIOperandInfo = (ops CPURegs, limm32);
-}
-def MEMlir : Operand<i32> {  // Long immediate + register.
-  let PrintMethod = "printMemOperand";
-    let MIOperandInfo = (ops limm32, CPURegs);
+  let MIOperandInfo = (ops CPURegs, CPURegs);
 }
 
-// Operand for printing out a condition code.
+// Register + long immediate.
+def MEMrli : Operand<i32> {
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops CPURegs, limm32);
+}
+
+// Long immediate + register.
+def MEMlir : Operand<i32> {
+  let PrintMethod = "printMemOperand";
+  let MIOperandInfo = (ops limm32, CPURegs);
+}
+
+// Condition code operands.
 def cc : Operand<i32> {
-    let PrintMethod = "printCCOperand";
+  let PrintMethod = "printCCOperand";
 }
 
 // Branch targets have OtherVT type.
-// TODO: How should brtargets be printed?
 def brtarget : Operand<OtherVT>;
 
 //===----------------------------------------------------------------------===//
@@ -144,6 +163,10 @@ multiclass GenPurposeInst<string opstring, SDNode OpNode> {
                       !strconcat(opstring, " $dst,$src1,$src2"),
                       [(set CPURegs:$dst,
                           (OpNode CPURegs:$src1, limm32:$src2))]>;
+
+  // TODO: Define .f versions (all), .cc versions (rr, rui, rli), and .cc.f
+  //       versions (rr, rui, rli). These *maybe* should go in a different
+  //       multi-class.
 }
 
 //===----------------------------------------------------------------------===//
@@ -166,14 +189,6 @@ let Defs = [SP], Uses = [SP] in {
                                 [(ARCcallseq_end timm:$amt1, timm:$amt2)]>;
 }
 
-let usesCustomInserter = 1 in {
-  def Select : Pseudo<(outs CPURegs:$dst),
-                      (ins CPURegs:$src, CPURegs:$src2, cc:$cc),
-                      "; Select PSEUDO",
-                      [(set CPURegs:$dst,
-                       (ARCselectcc CPURegs:$src, CPURegs:$src2, imm:$cc))]>;
-}
-
 // Used to manually insert comments into the generated assembly.
 def COMMENT : Pseudo<(outs), (ins CPURegs:$fake), "$fake", []>;
 
@@ -185,6 +200,13 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
     def RET : Pseudo<(outs), (ins), "j [blink]", [(ARCretflag)]>;
 }
 
+let usesCustomInserter = 1 in {
+  def Select : Pseudo<(outs CPURegs:$dst),
+                      (ins CPURegs:$src, CPURegs:$src2, cc:$cc),
+                      "; Select PSEUDO",
+                      [(set CPURegs:$dst,
+                       (ARCselectcc CPURegs:$src, CPURegs:$src2, imm:$cc))]>;
+}
 
 //===----------------------------------------------------------------------===//
 // General Instructions - Alphabetical Order.
@@ -195,7 +217,7 @@ let isReturn = 1, isTerminator = 1, hasDelaySlot = 1, isBarrier = 1 in {
 //    the result in the destination register.
 
 // TODO: Also model the case where the carry is used but not generated
-//       (i.e. not adde).
+//       (i.e. matching 'add' not 'adde').
 let Defs = [STATUS32], Uses = [STATUS32] in {
     defm ADC : GenPurposeInst<"adc.f", adde>;
 }
@@ -203,10 +225,15 @@ let Defs = [STATUS32], Uses = [STATUS32] in {
 // ADD - Page 180.
 //    Add two source operands together, and place the result in the destination
 //    register.
+//
+//    ADD also supports a "add a,limm,c" format, but LLVM knows that add is
+//    commutative and so does not allow immediates on the LHS. Instead, this
+//    situation is converted to "add a,b,limm" automatically.
 
 defm ADD : GenPurposeInst<"add", add>;
 
-// Carry-producing versions.
+// Carry-producing add.
+// TODO: Fold into a multi-class.
 let Defs = [STATUS32] in {
   def ADDrr_f : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, CPURegs:$src2),
                        "add.f $dst,$src1,$src2",
@@ -227,6 +254,7 @@ defm AND : GenPurposeInst<"and", and>;
 //    three-operand version). If a second source is used, only the bottom
 //    5 bits of the source will be used.
 
+// Single-shift versions.
 def ASLr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
                   "asl $dst,$src",
                   [(set CPURegs:$dst, (shl CPURegs:$src, 1))]>;
@@ -239,11 +267,11 @@ def ASLli : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
                   "asl $dst,$src",
                   [(set CPURegs:$dst, (shl limm32:$src, 1))]>;
 
-// TODO: Model the 5-bit limit somehow?
-
+// Multiple-shift versions.
+// TODO: Model the 5-bit limit somehow.
 defm ASL : GenPurposeInst<"asl", shl>;
 
-// ASL also supports a "ASL a,limm,c" format.
+// ASL also supports an "ASL a,limm,c" format.
 def ASLlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
                     "asl $dst,$src1,$src2",
                     [(set CPURegs:$dst, (shl limm32:$src1, CPURegs:$src2))]>;
@@ -255,6 +283,7 @@ def ASLlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
 //    three-operand version). If a second source is used, only the bottom
 //    5 bits of the source will be used.
 
+// Single-shift versions.
 def ASRr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
                   "asr $dst,$src",
                   [(set CPURegs:$dst, (sra CPURegs:$src, 1))]>;
@@ -267,8 +296,8 @@ def ASRli : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
                   "asr $dst,$src",
                   [(set CPURegs:$dst, (sra limm32:$src, 1))]>;
 
+// Multiple-shift versions.
 // TODO: Model the 5-bit limit somehow?
-
 defm ASR : GenPurposeInst<"asr", sra>;
 
 // ASR also supports a "ASR a,limm,c" format.
@@ -282,18 +311,21 @@ def ASRlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
 //    STATUS32; that is, the actual source of the condition must be computed
 //    previously.
 
-// An unconditional branch.
-let isBarrier = 1, isBranch = 1, isTerminator = 1 in {
-    def B : Pseudo<(outs), (ins brtarget:$dst),
-                   "b $dst",
-                   [(br bb:$dst)]>;
-}
+let isBranch = 1, isTerminator = 1 in {
+  // Unconditional branches.
+  let isBarrier = 1 in {
+      def B : Pseudo<(outs), (ins brtarget:$dst),
+                     "b $dst",
+                     [(br bb:$dst)]>;
+  } // isBarrier
 
-let isBranch = 1, isTerminator = 1, Uses = [STATUS32] in {
-    def BCC : Pseudo<(outs), (ins brtarget:$dst, cc:$cc),
-                     "b$cc $dst",
-                     [(ARCbrcc bb:$dst, imm:$cc)]>;
-} // Uses = [STATUS32]
+  // Conditional branches.
+  let Uses = [STATUS32] in {
+      def BCC : Pseudo<(outs), (ins brtarget:$dst, cc:$cc),
+                       "b$cc $dst",
+                       [(ARCbrcc bb:$dst, imm:$cc)]>;
+  } // Uses = [STATUS32]
+} // isBranch, isTerminator
 
 // BLcc - Page 212.
 //    When the specified condition code is met (cc = true in the unconditional
@@ -302,22 +334,22 @@ let isBranch = 1, isTerminator = 1, Uses = [STATUS32] in {
 
 // TODO: Add clobbered registers.
 // TODO: Should this clobber STATUS32 or not?
-// TODO: Add conditional jumps.
+// TODO: Add conditional branch + links.
 let isCall = 1 in {
   // All calls clobber the non-callee saved registers. SP is marked as
   // a use to prevent stack-pointer assignments that appear immediately
   // before calls from potentially appearing dead.
   let Defs = [STATUS32], Uses = [SP] in {
-    // TODO: Are both versions (i32imm and CPURegs) needed? Why?
     // Unconditional jump.
+    // TODO: Are both versions (i32imm and CPURegs) needed? Why?
     def BLi : Pseudo<(outs), (ins i32imm:$dst, variable_ops),
                        "bl $dst",
                        [(ARCcall imm:$dst)]>;
     def BLr : Pseudo<(outs), (ins CPURegs:$dst, variable_ops),
                        "bl $dst",
                        [(ARCcall CPURegs:$dst)]>;
-  }
-}
+  } // Defs = [STATUS32], Uses = [SP]
+} // isCall
 
 // CMP - Page 225.
 //    Performs a comparison by subtracting the second source operand from the
@@ -375,6 +407,7 @@ def LDlir : Pseudo<(outs CPURegs:$dst), (ins MEMlir:$addr),
                     [(set CPURegs:$dst, (load ADDRlir:$addr))]>;
 
 // Zero-extend versions of LDri.
+// TODO: Add LDli, LDrr, LDrli, LDlir.
 
 def LDri_extb : Pseudo<(outs CPURegs:$dst), (ins MEMri:$addr),
                        "ldb $dst,$addr",
@@ -385,6 +418,7 @@ def LDri_extw : Pseudo<(outs CPURegs:$dst), (ins MEMri:$addr),
                        [(set CPURegs:$dst, (zextloadi16 ADDRri:$addr))]>;
 
 // Sign-extend versions of LDri.
+// TODO: Add LDli, LDrr, LDrli, LDlir.
 
 def LDri_sextb : Pseudo<(outs CPURegs:$dst), (ins MEMri:$addr),
                         "ldb.x $dst,$addr",
@@ -401,6 +435,7 @@ def LDri_sextw : Pseudo<(outs CPURegs:$dst), (ins MEMri:$addr),
 //    three-operand version). If a second source is used, only the bottom
 //    5 bits of the source will be used.
 
+// Single-shift versions.
 def LSRr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
                   "lsr $dst,$src",
                   [(set CPURegs:$dst, (srl CPURegs:$src, 1))]>;
@@ -413,8 +448,8 @@ def LSRli : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
                   "lsr $dst,$src",
                   [(set CPURegs:$dst, (srl limm32:$src, 1))]>;
 
+// Multiple-shift versions.
 // TODO: Model the 5-bit limit somehow?
-
 defm LSR : GenPurposeInst<"lsr", srl>;
 
 // LSR also supports a "LSR a,limm,c" format.
@@ -486,7 +521,7 @@ defm OR : GenPurposeInst<"or", or>;
 //    destination register.
 
 // TODO: Also model the case where the carry is used but not generated
-//       (i.e. not sube).
+//       (i.e. matching 'sub' not 'sube').
 let Defs = [STATUS32], Uses = [STATUS32] in {
     defm SBC : GenPurposeInst<"sbc.f", sube>;
 }
@@ -495,23 +530,21 @@ let Defs = [STATUS32], Uses = [STATUS32] in {
 //    Sign extends the byte contained in the source operand to the most
 //    significant bit in a long word (32-bits) and places the result in
 //    the destination register.
+// TODO: Add u6 and limm versions.
 
 def SEXBrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
                     "sexb $dst,$src",
                     [(set CPURegs:$dst, (sext_inreg CPURegs:$src, i8))]>;
 
-// TODO: Sign-extend an unsigned 6-bit immediate, and a limm.
-
 // SEXW - page 304.
 //    Sign extends the word (16-bits) contained in the source operand to the
 //    most significant bit in a long word (32-bits) and places the result in
 //    the destination register.
+// TODO: Add u6 and limm versions.
 
 def SEXWrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
                     "sexw $dst,$src",
                     [(set CPURegs:$dst, (sext_inreg CPURegs:$src, i16))]>;
-
-// TODO: Sign-extend an unsigned 6-bit immediate, and a limm.
 
 // ST - page 310.
 //    Stores the value stored in the source operand in the destination memory
@@ -536,7 +569,7 @@ def STliri : Pseudo<(outs), (ins MEMri:$addr, i32imm:$src),
                     [(store limm32:$src, ADDRri:$addr)]>;
 
 // Truncuated versions of STrri.
-
+// TODO: Add STrli, STliri.
 def STrri_i8 : Pseudo<(outs), (ins MEMri:$addr, CPURegs:$src),
                       "stb $src,$addr",
                       [(truncstorei8 CPURegs:$src, ADDRri:$addr)]>;
@@ -556,7 +589,8 @@ def SUBlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
                       "sub $dst,$src1,$src2",
                       [(set CPURegs:$dst, (sub limm32:$src1, CPURegs:$src2))]>;
 
-// Carry-producing versions.
+// Carry-producing sub.
+// TODO: Fold into a multi-class.
 let Defs = [STATUS32] in {
   def SUBrr_f : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, CPURegs:$src2),
                        "sub.f $dst,$src1,$src2",
@@ -574,15 +608,14 @@ defm XOR : GenPurposeInst<"xor", xor>;
 // ARCompact Non-Instruction Patterns.
 //===----------------------------------------------------------------------===//
 
-// GlobalAddress.
+// GlobalAddress patterns.
 def : Pat<(i32 (ARCWrapper tglobaladdr:$dst)), (MOVrli tglobaladdr:$dst)>;
-
 def : Pat<(add CPURegs:$src1, (ARCWrapper tglobaladdr:$src2)),
           (ADDrli CPURegs:$src1, tglobaladdr:$src2)>;
 
 // Calls.
 def : Pat<(ARCcall (i32 tglobaladdr:$dst)), (BLi tglobaladdr:$dst)>;
 
-// Map integer extloads to zextloads.
+// Integer extloads are mapped to to zextloads.
 def : Pat<(i32 (extloadi8 ADDRri:$src)), (LDri_extb ADDRri:$src)>;
 def : Pat<(i32 (extloadi16 ADDRri:$src)), (LDri_extw ADDRri:$src)>;

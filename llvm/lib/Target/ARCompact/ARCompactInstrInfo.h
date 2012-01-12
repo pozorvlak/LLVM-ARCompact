@@ -74,7 +74,9 @@ public:
   ///      'false' destination in FBB, and a list of operands that evaluate the
   ///      condition. These operands can be passed to other TargetInstrInfo
   ///      methods to create new branches.
-  //
+  ///
+  ///  If AllowModify is true, then this routine is allowed to modify the basic
+  ///  block (e.g. by deleting instructions after the unconditional branch).
   bool AnalyzeBranch(MachineBasicBlock &MBB, MachineBasicBlock *&TBB,
       MachineBasicBlock *&FBB, SmallVectorImpl<MachineOperand> &Cond,
       bool AllowModify) const;

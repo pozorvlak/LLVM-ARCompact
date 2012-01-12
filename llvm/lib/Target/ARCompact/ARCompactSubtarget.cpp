@@ -22,7 +22,7 @@
 using namespace llvm;
 
 ARCompactSubtarget::ARCompactSubtarget(const std::string &TT,
-    const std::string &CPU, const std::string &FS) 
+    const std::string &CPU, const std::string &FS)
     : ARCompactGenSubtargetInfo(TT, CPU, FS) {
   // Determine default and user specified characteristics
   std::string CPUName = CPU;

@@ -25,12 +25,10 @@ extern Target TheARCompactEncoreTarget;
 
 // Defines symbolic names for ARCompact registers.  This defines a mapping from
 // register name to register number.
-//
 #define GET_REGINFO_ENUM
 #include "ARCompactGenRegisterInfo.inc"
 
 // Defines symbolic names for the ARCompact instructions.
-//
 #define GET_INSTRINFO_ENUM
 #include "ARCompactGenInstrInfo.inc"
 

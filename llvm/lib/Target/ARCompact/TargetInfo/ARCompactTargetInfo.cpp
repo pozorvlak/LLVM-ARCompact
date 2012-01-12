@@ -14,7 +14,7 @@ using namespace llvm;
 
 Target llvm::TheARCompactEncoreTarget;
 
-extern "C" void LLVMInitializeARCompactTargetInfo() { 
+extern "C" void LLVMInitializeARCompactTargetInfo() {
   RegisterTarget<Triple::arcompact> X(TheARCompactEncoreTarget, "arcompact",
       "ARCompact");
 }

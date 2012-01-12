@@ -44,7 +44,7 @@ void ARCompactAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
 
     // A global address.
     // TODO: Should a "@" be printed in front of these?
-    case MachineOperand::MO_GlobalAddress: 
+    case MachineOperand::MO_GlobalAddress:
       O << "@" << *Mang->getSymbol(MO.getGlobal());
       break;
 
@@ -88,7 +88,7 @@ void ARCompactAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
 }
 
 // Prints a condition code, such as "eq".
-void ARCompactAsmPrinter::printCCOperand(const MachineInstr *MI, int OpNum, 
+void ARCompactAsmPrinter::printCCOperand(const MachineInstr *MI, int OpNum,
     raw_ostream &O) {
   unsigned CC = MI->getOperand(OpNum).getImm();
   switch (CC) {
@@ -123,6 +123,6 @@ void ARCompactAsmPrinter::printCCOperand(const MachineInstr *MI, int OpNum,
 }
 
 // Static initialization.
-extern "C" void LLVMInitializeARCompactAsmPrinter() { 
+extern "C" void LLVMInitializeARCompactAsmPrinter() {
   RegisterAsmPrinter<ARCompactAsmPrinter> X(TheARCompactEncoreTarget);
 }

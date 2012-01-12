@@ -46,6 +46,7 @@ ARCompactTargetLowering::ARCompactTargetLowering(TargetMachine &TM)
   setLoadExtAction(ISD::SEXTLOAD, MVT::i1,  Promote);
   setLoadExtAction(ISD::ZEXTLOAD, MVT::i1,  Promote);
 
+  // Global addresses are custom lowered to ARCISD:Wrappers.
   setOperationAction(ISD::GlobalAddress,  MVT::i32,   Custom);
 
   // Expand non-supported branches.
@@ -84,15 +85,11 @@ SDValue ARCompactTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
     case ISD::BR_CC:            return LowerBR_CC(Op, DAG);
     case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
     default:
-      assert(0 && "Unimplemented operand!");
+      assert(0 && "Unimplemented operation!");
       return SDValue();
   }
 }
 
-/// This hook must be implemented to lower the incoming (formal) arguments,
-/// described by the Ins array, into the specified DAG. The implementation
-/// should fill in the InVals array with legal-type argument values, and return
-/// the resulting token chain value.
 SDValue ARCompactTargetLowering::LowerFormalArguments(SDValue Chain,
     CallingConv::ID CallConv, bool isVarArg,
     const SmallVectorImpl<ISD::InputArg> &Ins, DebugLoc dl, SelectionDAG &DAG,
@@ -108,7 +105,6 @@ SDValue ARCompactTargetLowering::LowerFormalArguments(SDValue Chain,
 
   // TODO: Handle varargs.
   assert(!isVarArg && "Varargs not supported yet");
-
 
   // Push the arguments onto the InVals vector.
   SDValue ArgValue;

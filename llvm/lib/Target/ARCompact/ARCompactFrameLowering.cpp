@@ -26,16 +26,16 @@
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/ArrayRef.h"
 
-#include <iostream>
+#include <string>
 
 using namespace llvm;
 
 /**
- * From GCC. Not checked if correct.
+ * This diagram was taken from the GCC backend.
  *
  * ARCompact stack frames look like:
  *
- *            Before call                     After call
+ *                Before call                      After call
  *   high  +-----------------------+       +-----------------------+
  *   mem   |  reg parm save area   |       | reg parm save area    |
  *         |  only created for     |       | only created for      |
@@ -83,57 +83,19 @@ using namespace llvm;
  *   mem                               SP  +-----------------------+
  */
 
-/* Taken from the ARC GCC Compiler description (not ARCompact, but close.)
- *
- * Prologue and Epilogue
- * The called routine is responsible for allocating its own stack frame, making
- * sure to preserve 4-byte alignment on the stack. This action is accomplished
- * by a section of code called the prologue, which the compiler places before
- * the body of the routine. After the body of the routine, the compiler
- * generates an epilogue to restore the registers saved in the prologue code,
- * previous stack frame and to return to the caller.
- *
- * The compiler-generated prologue code does the following:
- *   • Allocates space for register arguments in case of variadic function
- *     (functions with variable argument lists).
- *   • Saves the return address register (BLINK).
- *   • Saves required non-volatile general-purpose registers into the register
- *     save area.
- *   • Saves the caller’s frame pointer (FP), if required, and sets the new
- *     frame pointer to this location.
- *   • Decrements the stack pointer (SP) to account for the new stack frame.
- *
- * At the end of the function, the compiler-generated epilogue does the
- * following:
- *   • Restores the stack pointer (SP) to the beginning of the saved register
- *     area.
- *   • Restores all non-volatile registers that were saved in the register area.
- *   • Restores caller’s frame pointer register (FP), if required.
- *   • Restores the return address register (BLINK).
- *   • Restores caller’s stack pointer register (SP).
- *   • Returns to caller through the address stored in the blink register.
- *
- * Parameter Passing
- * Parameters are passed by pushing them onto the stack. The first 8 words (32
- * bytes) of arguments are loaded into registers r0 to r7. The remaining
- * arguments are passed by storing them into the stack immediately above the
- * stack pointer register (sp).
- *
- * Return Value
- *   • In the ARCtangent runtime environment, function values are returned in
- *     register r0.
- *   • A doubleword result (double or long double) is returned in registers r0
- *     to r1.
- *   • Structures that can be contained in a single 4-byte register are returned
- *     in r0.
- *   • All other structures are returned by storing them at an address passed to
- *     the function as a hidden first argument.
- *   • Sixty-four-bit integers (long long) are returned in registers r0 to r1.
- *
- */
+// Emits a manual ARC::COMMENT node, allowing the insertion of comments
+// into generated code.
+static void EmitComment(MachineBasicBlock &MBB,
+    MachineBasicBlock::iterator MBBI, DebugLoc dl,
+    const ARCompactInstrInfo &TII, std::string Comment) {
+  // A comment is wrapped in a MetaData node.
+  MDNode* CommentMDNode = MDNode::get(getGlobalContext(),
+      ArrayRef<Value*>(MDString::get(getGlobalContext(), Comment)));
+
+  BuildMI(MBB, MBBI, dl, TII.get(ARC::COMMENT)).addMetadata(CommentMDNode);
+}
 
 void ARCompactFrameLowering::emitPrologue(MachineFunction &MF) const {
-  /* This code adapted from GCC and other llvm backends. */
   MachineBasicBlock &MBB = MF.front();
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo  *MFI = MF.getFrameInfo();
@@ -145,10 +107,7 @@ void ARCompactFrameLowering::emitPrologue(MachineFunction &MF) const {
   assert(!MFI->hasVarSizedObjects() && "Variadic functions not supported yet!");
 
   // Start of prologue comment.
-  MDNode* start_prologue_mdnode = MDNode::get(getGlobalContext(),
-      ArrayRef<Value*>(MDString::get(getGlobalContext(), "PROLOGUE START")));
-  BuildMI(MBB, MBBI, dl, TII.get(ARC::COMMENT))
-      .addMetadata(start_prologue_mdnode);
+  EmitComment(MBB, MBBI, dl, TII, "PROLOGUE START");
 
   // The stack size should be 4-byte aligned.
   unsigned int NumBytes = MFI->getStackSize();
@@ -177,17 +136,14 @@ void ARCompactFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   // Allocate space for local registers.
   if (NumBytes > 0) {
-    // Check we're 4 aligned.
+    // Check we're 4-byte aligned.
     assert((NumBytes & 0x3) == 0);
     BuildMI(MBB, MBBI, dl, TII.get(ARC::SUBrsi), ARC::SP).addReg(ARC::SP)
         .addImm(NumBytes);
   }
 
   // End of prologue comment.
-  MDNode* end_prologue_mdnode = MDNode::get(getGlobalContext(),
-      ArrayRef<Value*>(MDString::get(getGlobalContext(), "PROLOGUE END")));
-  BuildMI(MBB, MBBI, dl, TII.get(ARC::COMMENT))
-      .addMetadata(end_prologue_mdnode);
+  EmitComment(MBB, MBBI, dl, TII, "END PROLOGUE");
 }
 
 void ARCompactFrameLowering::emitEpilogue(MachineFunction &MF,
@@ -207,27 +163,11 @@ void ARCompactFrameLowering::emitEpilogue(MachineFunction &MF,
       "Can only put epilogue before a return instruction!");
 
   // Start of epilogue comment.
-  MDNode* start_epilogue_mdnode = MDNode::get(getGlobalContext(),
-      ArrayRef<Value*>(MDString::get(getGlobalContext(), "EPILOGUE START")));
-  BuildMI(MBB, MBBI, dl, TII.get(ARC::COMMENT))
-      .addMetadata(start_epilogue_mdnode);
+  EmitComment(MBB, MBBI, dl, TII, "START EPILOGUE");
 
   // The stack size should be 4-byte aligned.
   unsigned NumBytes = MFI->getStackSize();
   NumBytes = (NumBytes + 3) & ~3;
-
- /*
-  * At the end of the function, the compiler-generated epilogue does the
-  * following:
-  *   • Restores the stack pointer (SP) to the beginning of the saved register
-  *     area.
-  *   • Restores all non-volatile registers that were saved in the register
-  *     area.
-  *   • Restores caller’s frame pointer register (FP), if required.
-  *   • Restores the return address register (BLINK).
-  *   • Restores caller’s stack pointer register (SP).
-  *   • Returns to caller through the address stored in the blink register.
-  */
 
   // Restore stack pointer to the beginning of saved register area
   if (NumBytes > 0) {
@@ -254,10 +194,7 @@ void ARCompactFrameLowering::emitEpilogue(MachineFunction &MF,
 
   // End of epilogue comment.
   MBBI++;
-  MDNode* end_epilogue_mdnode = MDNode::get(getGlobalContext(),
-      ArrayRef<Value*>(MDString::get(getGlobalContext(), "EPILOGUE END")));
-  BuildMI(MBB, MBBI, dl, TII.get(ARC::COMMENT))
-      .addMetadata(end_epilogue_mdnode);
+  EmitComment(MBB, MBBI, dl, TII, "END EPILOGUE");
 }
 
 bool ARCompactFrameLowering::hasFP(const MachineFunction &MF) const {
