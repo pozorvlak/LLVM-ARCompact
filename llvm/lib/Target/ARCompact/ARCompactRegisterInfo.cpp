@@ -7,7 +7,7 @@
 //
 //===----------------------------------------------------------------------===//
 //
-// This file contains the ARCOMPACT implementation of the TargetRegisterInfo 
+// This file contains the ARCOMPACT implementation of the TargetRegisterInfo
 // class.
 //
 //===----------------------------------------------------------------------===//
@@ -31,7 +31,7 @@ using namespace llvm;
 
 ARCompactRegisterInfo::ARCompactRegisterInfo(ARCompactSubtarget &st,
                                      const TargetInstrInfo &tii)
-  : ARCompactGenRegisterInfo(ARC::BLINK), Subtarget(st), TII(tii) {
+    : ARCompactGenRegisterInfo(ARC::BLINK), Subtarget(st), TII(tii) {
 }
 
 const unsigned* ARCompactRegisterInfo::getCalleeSavedRegs(
@@ -41,14 +41,13 @@ const unsigned* ARCompactRegisterInfo::getCalleeSavedRegs(
   return CalleeSavedRegs;
 }
 
-BitVector ARCompactRegisterInfo::getReservedRegs(const MachineFunction &MF) 
+BitVector ARCompactRegisterInfo::getReservedRegs(const MachineFunction &MF)
     const {
   BitVector Reserved(getNumRegs());
 
-  // TODO: If not needed for this MF, the frame pointer isnt actually reserved.
-
   // The global pointer, stack pointer, frame pointer, blink and interrupt
   // link registers are reserved.
+  // TODO: If not needed, the frame pointer isnt actually reserved.
   Reserved.set(ARC::GP);
   Reserved.set(ARC::SP);
   Reserved.set(ARC::FP);
@@ -61,8 +60,23 @@ BitVector ARCompactRegisterInfo::getReservedRegs(const MachineFunction &MF)
 
 void ARCompactRegisterInfo::eliminateCallFramePseudoInstr(MachineFunction &MF,
     MachineBasicBlock &MBB, MachineBasicBlock::iterator I) const {
-  // Simply discard ADJCALLSTACKDOWN, ADJCALLSTACKUP instructions.
+  // Simply discard ADJCALLSTACKDOWN and ADJCALLSTACKUP instructions - the
+  // callee takes care of moving the stack.
   MBB.erase(I);
+}
+
+static bool IsStore(MachineInstr &MI) {
+  // TODO: Set "isStore" variable on such instructions, check for that.
+  switch (MI.getOpcode()) {
+    case ARC::STrri:
+    case ARC::STrli:
+    case ARC::STliri:
+    case ARC::STrri_i8:
+    case ARC::STrri_i16:
+      return true;
+    default:
+      return false;
+  }
 }
 
 void ARCompactRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
@@ -78,24 +92,28 @@ void ARCompactRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
   }
   int FrameIndex = MI.getOperand(i).getIndex();
 
-  // Addressable stack objects are accessed using negative offsets from the 
+  // Addressable stack objects are accessed using negative offsets from the
   // frame pointer.
   MachineFunction &MF = *MI.getParent()->getParent();
   int Offset = MF.getFrameInfo()->getObjectOffset(FrameIndex) +
-    MI.getOperand(i + 1).getImm();
+      MI.getOperand(i + 1).getImm();
 
-  // Replace frame index with a frame pointer reference.
-  // TODO: Check what size of offset can fit in an immediate field. This will 
-  // depend on the exact instruction being used.
-  if (Offset >= -4096 && Offset <= 4095) {
-    // If the offset is small enough to fit in the immediate field, directly
-    // encode it.
+  // Replace the frame index with a frame pointer reference.
+  if (IsStore(MI)) {
+    // Store instructions have at most a 9-bit signed immediate offset. Therefore,
+    // if the offset is outside this range we need to do something.
+    // TODO: What should we do?
+    if (Offset >= -256 && Offset <= 255) {
+      MI.getOperand(i).ChangeToRegister(ARC::FP, false);
+      MI.getOperand(i+1).ChangeToImmediate(Offset);
+    } else {
+      llvm_unreachable("Offset immediate too small or too big!");
+    }
+  } else {
+    // For now, just default to converting the frame index.
+    // TODO: What other instructions hit this function - load?
     MI.getOperand(i).ChangeToRegister(ARC::FP, false);
     MI.getOperand(i+1).ChangeToImmediate(Offset);
-  } else {
-    // TODO: What is this? Left over from Sparc!
-    MI.getOperand(i).ChangeToRegister(ARC::T1, false);
-    MI.getOperand(i+1).ChangeToImmediate(Offset & ((1 << 10)-1));
   }
 }
 
@@ -104,7 +122,7 @@ unsigned ARCompactRegisterInfo::getRARegister() const {
     return ARC::BLINK;
 }
 
-unsigned ARCompactRegisterInfo::getFrameRegister(const MachineFunction &MF) 
+unsigned ARCompactRegisterInfo::getFrameRegister(const MachineFunction &MF)
     const {
   return ARC::FP;
 }
