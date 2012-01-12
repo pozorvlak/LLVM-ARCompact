@@ -4,14 +4,21 @@ Notes:
 
 To compile with clang --> bitcode
 
-  Clang/bin/clang -emit-llvm filename.c -c -o filename.bc
+  Clang/bin/clang -emit-llvm test.c -c -o test.bc
 
 
 To view the bitcode
 
-  llvm/Debug+Asserts/bin/llvm-dis < filename.bc
+  llvm/Debug+Asserts/bin/llvm-dis < test.bc
 
 
 To compile it to asm using the arcompact backend
 
   llvm/Debug+Asserts/bin/llc -debug -march=arcompact -filetype=asm test.bc 2> debug
+
+
+
+
+To compile stuff via GCC:
+
+/afs/inf.ed.ac.uk/group/project/arc_tools/arc_gcc_2.3/arc-elf32/bin/arc-elf32-gcc -S test.c -o gcc-test.s
