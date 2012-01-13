@@ -117,10 +117,8 @@ void ARCompactFrameLowering::emitPrologue(MachineFunction &MF) const {
 
   // Save the return address register, if necessary
   if (MFI->adjustsStack()) {
-    BuildMI(MBB, MBBI, dl, TII.get(ARC::STrri)).addReg(ARC::SP)
+    BuildMI(MBB, MBBI, dl, TII.get(ARC::STrri_a)).addReg(ARC::SP)
         .addImm(-UNITS_PER_WORD).addReg(ARC::BLINK);
-    BuildMI(MBB, MBBI, dl, TII.get(ARC::SUBrui), ARC::SP).addReg(ARC::SP)
-        .addImm(UNITS_PER_WORD);
   }
 
   // TODO: Create the register save area, and save the required registers to it.
@@ -128,10 +126,8 @@ void ARCompactFrameLowering::emitPrologue(MachineFunction &MF) const {
   // Save the caller's frame pointer (if required), and set new FP to this
   // location.
   // TODO: Work out if the frame pointer is required.
-  BuildMI(MBB, MBBI, dl, TII.get(ARC::STrri)).addReg(ARC::SP)
+  BuildMI(MBB, MBBI, dl, TII.get(ARC::STrri_a)).addReg(ARC::SP)
       .addImm(-UNITS_PER_WORD).addReg(ARC::FP);
-  BuildMI(MBB, MBBI, dl, TII.get(ARC::SUBrui), ARC::SP).addReg(ARC::SP)
-      .addImm(UNITS_PER_WORD);
   BuildMI(MBB, MBBI, dl, TII.get(ARC::MOVrr), ARC::FP).addReg(ARC::SP);
 
   // Allocate space for local registers.
@@ -179,17 +175,13 @@ void ARCompactFrameLowering::emitEpilogue(MachineFunction &MF,
 
   // Load the frame pointer back.
   // TODO: Work out if the frame pointer was needed.
-  BuildMI(MBB, MBBI, dl, TII.get(ARC::ADDrsi), ARC::SP).addReg(ARC::SP)
+  BuildMI(MBB, MBBI, dl, TII.get(ARC::LDri_ab)).addReg(ARC::FP).addReg(ARC::SP)
       .addImm(UNITS_PER_WORD);
-  BuildMI(MBB, MBBI, dl, TII.get(ARC::LDri)).addReg(ARC::FP).addReg(ARC::SP)
-      .addImm(-UNITS_PER_WORD);
 
   // Restore the return address register, if needed.
   if (MFI->adjustsStack()) {
-    BuildMI(MBB, MBBI, dl, TII.get(ARC::ADDrsi), ARC::SP).addReg(ARC::SP)
-        .addImm(UNITS_PER_WORD);
-    BuildMI(MBB, MBBI, dl, TII.get(ARC::LDri)).addReg(ARC::SP)
-        .addReg(ARC::BLINK).addImm(-UNITS_PER_WORD);
+    BuildMI(MBB, MBBI, dl, TII.get(ARC::LDri_ab)).addReg(ARC::SP)
+        .addReg(ARC::BLINK).addImm(UNITS_PER_WORD);
   }
 
   // End of epilogue comment.

@@ -428,6 +428,16 @@ def LDri_sextw : Pseudo<(outs CPURegs:$dst), (ins MEMri:$addr),
                         "ldw.x $dst,$addr",
                         [(set CPURegs:$dst, (sextloadi16 ADDRri:$addr))]>;
 
+// Address-write back versions of ST. These are not pattern matched yet but
+// are provided for use by the prologue/epilogue emitters.
+def LDri_a : Pseudo<(outs CPURegs:$src), (ins MEMri:$addr),
+                    "ld.a $src,$addr",
+                    []>;
+
+def LDri_ab : Pseudo<(outs CPURegs:$src), (ins MEMri:$addr),
+                    "ld.ab $src,$addr",
+                    []>;
+
 // LSR - Page 254.
 //    Logically shifts the source operand right, and places the result in the
 //    destination register. The shift amount can be a constant 1 (in the
@@ -577,6 +587,12 @@ def STrri_i8 : Pseudo<(outs), (ins MEMri:$addr, CPURegs:$src),
 def STrri_i16 : Pseudo<(outs), (ins MEMri:$addr, CPURegs:$src),
                       "stw $src,$addr",
                       [(truncstorei16 CPURegs:$src, ADDRri:$addr)]>;
+
+// Address-write back versions of ST. These are not pattern matched yet but
+// are provided for use by the prologue/epilogue emitters.
+def STrri_a : Pseudo<(outs), (ins MEMri:$addr, CPURegs:$src),
+                      "st.a $src,$addr",
+                      []>;
 
 // SUB - Page 312.
 //    Subtracts the second source operand from the first, and places the result
