@@ -13,7 +13,9 @@
 #include "ARCompact.h"
 #include "ARCompactTargetMachine.h"
 #include "llvm/PassManager.h"
+#include "llvm/CodeGen/Passes.h"
 #include "llvm/Support/TargetRegistry.h"
+
 using namespace llvm;
 
 extern "C" void LLVMInitializeARCompactTarget() {
@@ -38,6 +40,15 @@ bool ARCompactTargetMachine::addInstSelector(PassManagerBase &PM,
                                          CodeGenOpt::Level OptLevel) {
   PM.add(createARCompactISelDag(*this));
   return false;
+}
+
+bool ARCompactTargetMachine::addPreSched2(PassManagerBase &PM,
+    CodeGenOpt::Level OptLevel) {
+  if (OptLevel != CodeGenOpt::None) {
+    PM.add(createIfConverterPass());
+  }
+  // Request print-out.
+  return true;
 }
 
 ARCompactEncoreTargetMachine::ARCompactEncoreTargetMachine(const Target &T,

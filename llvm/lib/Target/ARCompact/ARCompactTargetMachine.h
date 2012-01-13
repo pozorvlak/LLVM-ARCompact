@@ -61,6 +61,7 @@ public:
 
   // Pass Pipeline Configuration
   virtual bool addInstSelector(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
+  virtual bool addPreSched2(PassManagerBase &PM, CodeGenOpt::Level OptLevel);
 };
 
 // The Encore processor.
