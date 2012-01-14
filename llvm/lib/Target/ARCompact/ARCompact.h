@@ -44,6 +44,29 @@ namespace ARCCC {
   };
 }
 
+inline static const char* ARCCCToString(ARCCC::CondCodes CC) {
+  switch (CC) {
+    case ARCCC::COND_AL:  return "al";
+    case ARCCC::COND_EQ:  return "eq";
+    case ARCCC::COND_NE:  return "ne";
+    case ARCCC::COND_P:   return "p";
+    case ARCCC::COND_N:   return "n";
+    case ARCCC::COND_LO:  return "lo";
+    case ARCCC::COND_HS:  return "hs";
+    case ARCCC::COND_V:   return "v";
+    case ARCCC::COND_NV:  return "nv";
+    case ARCCC::COND_GT:  return "gt";
+    case ARCCC::COND_GE:  return "ge";
+    case ARCCC::COND_LT:  return "lt";
+    case ARCCC::COND_LE:  return "le";
+    case ARCCC::COND_HI:  return "hi";
+    case ARCCC::COND_LS:  return "ls";
+    case ARCCC::COND_PNZ: return "pnz";
+    default:
+      llvm_unreachable("Unknown condition code");
+  }
+}
+
 namespace llvm {
   // Forward declarations.
   class ARCompactTargetMachine;
