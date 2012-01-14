@@ -7,6 +7,25 @@
 //
 //===----------------------------------------------------------------------===//
 
+//===----------------------------------------------------------------------===//
+// ARCompact Special Operands
+//===----------------------------------------------------------------------===//
+
+// ARCompact Predicate operand. Default to 0 = always (AL). The second part is
+// the condition code register which defaults to 0 (no register).
+// TODO: Is DecodeMethod necessary if we do not have a disassembly feature?
+def CondCodeOperand : AsmOperandClass { let Name = "CondCode"; }
+def pred : PredicateOperand<OtherVT, (ops i32imm, i32imm),
+                                     (ops (i32 0), (i32 zero_reg))> {
+  let PrintMethod = "printPredicateOperand";
+  let ParserMatchClass = CondCodeOperand;
+  let DecoderMethod = "DecodePredicateOperand";
+}
+
+//===----------------------------------------------------------------------===//
+// ARCompact Instruction Classes
+//===----------------------------------------------------------------------===//
+
 // Represents a generic ARCompact instruction.
 class ARCInst<dag outs, dag ins, string asmstr, list<dag> pattern>
     : Instruction {
