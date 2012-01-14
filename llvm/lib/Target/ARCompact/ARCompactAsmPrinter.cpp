@@ -22,7 +22,7 @@ using namespace llvm;
 #include "ARCompactGenAsmWriter.inc"
 
 // Prints a basic operand, such as a register or an immediate.
-void ARCompactAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
+void ARCompactAsmPrinter::printOperand(const MachineInstr *MI, unsigned opNum,
     raw_ostream &O, const char* Modifier) {
   const MachineOperand &MO = MI->getOperand (opNum);
   switch (MO.getType()) {
@@ -68,8 +68,8 @@ void ARCompactAsmPrinter::printOperand(const MachineInstr *MI, int opNum,
 }
 
 // Prints a memory operand, such as [r1,4].
-void ARCompactAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
-                                      raw_ostream &O, const char *Modifier) {
+void ARCompactAsmPrinter::printMemOperand(const MachineInstr *MI,
+    unsigned opNum, raw_ostream &O, const char *Modifier) {
   O << "[";
   printOperand(MI, opNum, O);
 
@@ -87,7 +87,7 @@ void ARCompactAsmPrinter::printMemOperand(const MachineInstr *MI, int opNum,
 }
 
 // Prints a condition code, such as "eq".
-void ARCompactAsmPrinter::printCCOperand(const MachineInstr *MI, int OpNum,
+void ARCompactAsmPrinter::printCCOperand(const MachineInstr *MI, unsigned OpNum,
     raw_ostream &O) {
   unsigned CC = MI->getOperand(OpNum).getImm();
   switch (CC) {
@@ -142,6 +142,15 @@ void ARCompactAsmPrinter::printCCOperand(const MachineInstr *MI, int OpNum,
     default:
       assert(0 && "Unsupported CC code");
       break;
+  }
+}
+
+void ARCompactAsmPrinter::printPredicateOperand(const MachineInstr *MI,
+    unsigned OpNum, raw_ostream &O) {
+  ARCCC::CondCodes CC = (ARCCC::CondCodes) MI->getOperand(OpNum).getImm();
+  // AL is the default, do not print it.
+  if (CC != ARCCC::COND_AL) {
+    O << ARCCCToString(CC);
   }
 }
 
