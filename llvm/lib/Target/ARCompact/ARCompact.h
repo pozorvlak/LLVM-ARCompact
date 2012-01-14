@@ -42,6 +42,28 @@ namespace ARCCC {
 
     COND_INVALID
   };
+
+  inline static CondCodes getOppositeCondition(CondCodes CC) {
+    switch (CC) {
+      case COND_EQ: return COND_NE;
+      case COND_NE: return COND_EQ;
+      case COND_P:  return COND_N;
+      case COND_N:  return COND_P;
+      case COND_LO: return COND_HS;
+      case COND_HS: return COND_LO;
+      case COND_V:  return COND_NV;
+      case COND_NV: return COND_V;
+      case COND_GT: return COND_LE;
+      case COND_GE: return COND_LT;
+      case COND_LT: return COND_GE;
+      case COND_LE: return COND_GT;
+      case COND_HI: return COND_LS;
+      case COND_LS: return COND_HI;
+      default:
+        llvm_unreachable("Unknown or un-invertible condition code.");
+    }
+  }
+
 }
 
 inline static const char* ARCCCToString(ARCCC::CondCodes CC) {
