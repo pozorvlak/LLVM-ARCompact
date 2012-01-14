@@ -101,6 +101,9 @@ public:
   virtual bool PredicateInstruction (MachineInstr *MI,
       const SmallVectorImpl<MachineOperand> &Pred) const;
 
+  /// Return true if the specified instruction can be predicated.
+  virtual bool isPredicable(MachineInstr *MI) const;
+
   /// Returns true if the first specified predicate subsumes (contains) the
   /// second, e.g. GE subsumes GT.
   virtual bool SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,

@@ -239,6 +239,23 @@ bool ARCompactInstrInfo::PredicateInstruction (MachineInstr *MI,
   return false;
 }
 
+bool ARCompactInstrInfo::isPredicable(MachineInstr *MI) const {
+  // If an instruction does not have a PredicateOperand, it definitely
+  // cannot be predicated.
+  if (!MI->getDesc().isPredicable()) {
+    return false;
+  }
+
+  // Otherwise, either the first register must be 0 (*NOT YET MODELLED*)
+  // or the dst and src1 registers must be the same.
+  // TODO: Check to see if there are any other cases.
+  if (MI->getOperand(0).getReg() != MI->getOperand(1).getReg()) {
+    return false;
+  }
+
+  return true;
+}
+
 bool ARCompactInstrInfo::SubsumesPredicate(
     const SmallVectorImpl<MachineOperand> &Pred1,
     const SmallVectorImpl<MachineOperand> &Pred2) const {
