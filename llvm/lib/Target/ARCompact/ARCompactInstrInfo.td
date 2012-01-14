@@ -162,14 +162,46 @@ multiclass GenPurposeInst<string opstring, SDNode OpNode> {
   }
 
   def rli : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, i32imm:$src2),
-                      !strconcat(opstring, " $dst,$src1,$src2"),
-                      [(set CPURegs:$dst,
-                          (OpNode CPURegs:$src1, limm32:$src2))]>;
+                   !strconcat(opstring, " $dst,$src1,$src2"),
+                   [(set CPURegs:$dst, (OpNode CPURegs:$src1, limm32:$src2))]>;
 
   // TODO: Define .f versions (all), .cc versions (rr, rui, rli), and .cc.f
   //       versions (rr, rui, rli). These *maybe* should go in a different
   //       multi-class.
 }
+
+// Note the enforcement of $src1 = $dst1 for <.cc> is done by isPredicable in
+// ARCompactInstrInfo.cpp.
+multiclass ALUOp<string opstring, SDNode OpNode> {
+  def rr : Pseudo<(outs CPURegs:$dst),
+                  (ins CPURegs:$src1, CPURegs:$src2, pred:$cc),
+                  !strconcat(opstring, "$cc $dst,$src1,$src2"),
+                  [(set CPURegs:$dst, (OpNode CPURegs:$src1, CPURegs:$src2))]>;
+
+  def rui : Pseudo<(outs CPURegs:$dst),
+                   (ins CPURegs:$src1, i32imm:$src2, pred:$cc),
+                   !strconcat(opstring, "$cc $dst,$src1,$src2"),
+                   [(set CPURegs:$dst, (OpNode CPURegs:$src1, uimm6:$src2))]>;
+
+  let Constraints = "$src1 = $dst" in {
+    def rsi : Pseudo<(outs CPURegs:$dst),
+                     (ins CPURegs:$src1, i32imm:$src2),
+                     !strconcat(opstring, " $dst,$src1,$src2"),
+                     [(set CPURegs:$dst,
+                         (OpNode CPURegs:$src1, simm12:$src2))]>;
+  }
+
+  //def lir : Pseudo<(outs CPURegs:$dst),
+  //                 (ins i32imm:$src1, CPURegs:$src2),
+  //                 !strconcat(opstring, " $dst,$src1,$src2"),
+  //                 [(set CPURegs:$dst, (OpNode limm32:$src1, CPURegs:$src2))]>;
+
+  def rli : Pseudo<(outs CPURegs:$dst),
+                   (ins CPURegs:$src1, i32imm:$src2, pred:$cc),
+                   !strconcat(opstring, "$cc $dst,$src1,$src2"),
+                   [(set CPURegs:$dst, (OpNode CPURegs:$src1, limm32:$src2))]>;
+}
+
 
 //===----------------------------------------------------------------------===//
 // ARCompact Instructions.
@@ -247,7 +279,7 @@ let Defs = [STATUS32] in {
 //    Takes the logical bitwise AND of two source operands, and places the
 //    result into the destination register.
 
-defm AND : GenPurposeInst<"and", and>;
+defm AND : ALUOp<"and", and>;
 
 // ASL - Page 192.
 //    Arithmetically shifts the source operand left, and places the result in
