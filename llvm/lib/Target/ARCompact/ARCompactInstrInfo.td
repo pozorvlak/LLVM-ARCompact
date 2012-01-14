@@ -140,15 +140,17 @@ def brtarget : Operand<OtherVT>;
 //   * Register1 = Register2 op Long Immediate
 //
 multiclass GenPurposeInst<string opstring, SDNode OpNode> {
-  def rr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, CPURegs:$src2),
-                      !strconcat(opstring, " $dst,$src1,$src2"),
-                      [(set CPURegs:$dst,
-                          (OpNode CPURegs:$src1, CPURegs:$src2))]>;
+  // TODO: Only define pred in the case where $dst = $src1
+  def rr : Pseudo<(outs CPURegs:$dst),
+                  (ins CPURegs:$src1, CPURegs:$src2, pred:$p),
+                  !strconcat(opstring, "$p $dst,$src1,$src2"),
+                  [(set CPURegs:$dst, (OpNode CPURegs:$src1, CPURegs:$src2))]>;
 
-  def rui : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, i32imm:$src2),
-                      !strconcat(opstring, " $dst,$src1,$src2"),
-                      [(set CPURegs:$dst,
-                          (OpNode CPURegs:$src1, uimm6:$src2))]>;
+  // TODO: Only define pred in the case where $dst = $src1
+  def rui : Pseudo<(outs CPURegs:$dst),
+                   (ins CPURegs:$src1, i32imm:$src2, pred:$p),
+                   !strconcat(opstring, "$p $dst,$src1,$src2"),
+                   [(set CPURegs:$dst, (OpNode CPURegs:$src1, uimm6:$src2))]>;
 
   // In the signed-immediate case, the source and destination registers must be
   // the same register, due to encoding constraints.
