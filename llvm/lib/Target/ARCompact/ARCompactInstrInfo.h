@@ -91,6 +91,45 @@ public:
   /// Returns the number of instructions that were removed.
   unsigned RemoveBranch(MachineBasicBlock &MBB) const;
 
+  /// Reverses the branch condition of the specified condition list, returning
+  /// false on success and true if it cannot be reversed.
+  virtual bool ReverseBranchCondition(SmallVectorImpl<MachineOperand> &Cond)
+      const;
+
+  /// Converts the instruction into a predicated instruction. Returns true if
+  /// the operation was successful.
+  virtual bool PredicateInstruction (MachineInstr *MI,
+      const SmallVectorImpl<MachineOperand> &Pred) const;
+
+  /// Returns true if the first specified predicate subsumes (contains) the
+  /// second, e.g. GE subsumes GT.
+  virtual bool SubsumesPredicate(const SmallVectorImpl<MachineOperand> &Pred1,
+      const SmallVectorImpl<MachineOperand> &Pred2) const;
+
+  /// If the specified instruction defines any predicate or condition code
+  /// register(s) used for predication, returns true as well as a reference
+  /// to the operand that defines the predicate.
+  virtual bool DefinesPredicate(MachineInstr *MI, std::vector<MachineOperand> &Pred)
+      const;
+
+  /// Returns true if it's profitable to predicate a set of instructions with
+  /// an accumulated instruction latency of "NumCycles" of the specified basic
+  /// block, where the probability of the instructions being executed is given
+  /// by Probability, and Confidence is a measure of our confidence that it
+  /// will be properly predicted.
+  virtual bool isProfitableToIfCvt(MachineBasicBlock &MBB, unsigned NumCycles,
+      unsigned ExtraPredCycles, const BranchProbability &Probability) const;
+
+  /// Second variant of isProfitableToIfCvt, this one checks for the case
+  /// where two basic blocks from true and false path of a if-then-else
+  /// (diamond) are predicated on mutally exclusive predicates, where the
+  /// probability of the true path being taken is given by Probability, and
+  /// Confidence is a measure of our confidence that it will be properly
+  /// predicted.
+  virtual bool isProfitableToIfCvt(MachineBasicBlock &TMBB, unsigned TCycles,
+      unsigned TExtra, MachineBasicBlock &FMBB, unsigned FCycles,
+      unsigned FExtra, const BranchProbability &Probability) const;
+
   /// Returns the RegisterInfo for the Target.
   virtual const ARCompactRegisterInfo &getRegisterInfo() const {
     return RI;

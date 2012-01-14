@@ -16,6 +16,7 @@
 #include "ARCompactSubtarget.h"
 #include "llvm/CodeGen/MachineInstrBuilder.h"
 #include "llvm/CodeGen/MachineRegisterInfo.h"
+#include "llvm/Support/BranchProbability.h"
 #include "llvm/Support/ErrorHandling.h"
 #include "llvm/Support/TargetRegistry.h"
 #include "llvm/ADT/STLExtras.h"
@@ -197,7 +198,6 @@ unsigned ARCompactInstrInfo::InsertBranch(MachineBasicBlock &MBB,
 unsigned ARCompactInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   MachineBasicBlock::iterator I = MBB.end();
   unsigned Count = 0;
-
   while (I != MBB.begin()) {
     --I;
 
@@ -215,4 +215,145 @@ unsigned ARCompactInstrInfo::RemoveBranch(MachineBasicBlock &MBB) const {
   }
 
   return Count;
+}
+
+bool ARCompactInstrInfo::ReverseBranchCondition(
+    SmallVectorImpl<MachineOperand> &Cond) const {
+  ARCCC::CondCodes CC = (ARCCC::CondCodes) (int) Cond[0].getImm();
+  Cond[0].setImm(ARCCC::getOppositeCondition(CC));
+  return false;
+}
+
+bool ARCompactInstrInfo::PredicateInstruction (MachineInstr *MI,
+    const SmallVectorImpl<MachineOperand> &Pred) const {
+  unsigned Opc = MI->getOpcode();
+
+  int PIdx = MI->findFirstPredOperandIdx();
+  if (PIdx != -1) {
+    // Get the predicate operand, and replace it with the condition
+    // code to check and the STATUS32 register.
+    MachineOperand &PMO = MI->getOperand(PIdx);
+    PMO.setImm(Pred[0].getImm());
+    return true;
+  }
+  return false;
+}
+
+bool ARCompactInstrInfo::SubsumesPredicate(
+    const SmallVectorImpl<MachineOperand> &Pred1,
+    const SmallVectorImpl<MachineOperand> &Pred2) const {
+  // Sanity check.
+  // TODO: Why not just llvm_unreachable?
+  if (Pred1.size() > 2 || Pred2.size() > 2) {
+    return false;
+  }
+
+  ARCCC::CondCodes CC1 = (ARCCC::CondCodes) Pred1[0].getImm();
+  ARCCC::CondCodes CC2 = (ARCCC::CondCodes) Pred2[0].getImm();
+
+  // Identical opcodes trivially subsume one another.
+  if (CC1 == CC2) {
+  return true;
+  }
+
+  switch (CC1) {
+    // AL contains all other predicates.
+    case ARCCC::COND_AL:
+      return true;
+    // TODO: Does HS not include EQ?
+    case ARCCC::COND_HS:
+      return CC2 == ARCCC::COND_HI;
+    case ARCCC::COND_LS:
+      return CC2 == ARCCC::COND_LO || CC2 == ARCCC::COND_EQ;
+    case ARCCC::COND_GE:
+      return CC2 == ARCCC::COND_GT;
+    case ARCCC::COND_LE:
+      return CC2 == ARCCC::COND_LT;
+    default:
+      return false;
+    }
+}
+
+bool ARCompactInstrInfo::DefinesPredicate(MachineInstr *MI,
+    std::vector<MachineOperand> &Pred) const {
+  // TODO: Does this pick up on CMP?
+  const MCInstrDesc &MCID = MI->getDesc();
+  if (!MCID.getImplicitDefs() && !MCID.hasOptionalDef()) {
+    return false;
+  }
+
+  bool Found = false;
+  for (unsigned i = 0, e = MI->getNumOperands(); i != e; ++i) {
+    const MachineOperand &MO = MI->getOperand(i);
+    if (MO.isReg() && MO.getReg() == ARC::STATUS32) {
+      Pred.push_back(MO);
+      Found = true;
+      break;
+    }
+  }
+
+  return Found;
+}
+
+bool ARCompactInstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
+    unsigned NumCycles, unsigned ExtraPredCycles,
+    const BranchProbability &Probability) const {
+  MBB.dump();
+  if (!NumCycles) {
+    return false;
+  }
+
+  // Attempt to estimate the relative costs of predication versus branching.
+  // Branching costs:
+  //    (prob_branch * num_branch_cycles) + branch_cost + mispredict_penalty
+  //
+  // Predicating costs:
+  //    num_branch_cycles + extra_predicate_cycles
+
+  unsigned UnpredCost = Probability.getNumerator() * NumCycles;
+  UnpredCost /= Probability.getDenominator();
+  UnpredCost += 1; // The branch itself.
+  // TODO: Do ARCompact misprediction penalty costs.
+  //UnpredCost += Subtarget.getMispredictionPenalty() / 10;
+  UnpredCost += 10 / 10;
+
+  return (NumCycles + ExtraPredCycles) <= UnpredCost;
+}
+
+bool ARCompactInstrInfo::isProfitableToIfCvt(MachineBasicBlock &TMBB,
+    unsigned TCycles, unsigned TExtra, MachineBasicBlock &FMBB,
+    unsigned FCycles, unsigned FExtra, const BranchProbability &Probability)
+    const {
+  if (!TCycles || !FCycles) {
+    return false;
+  }
+
+  // Attempt to estimate the relative costs of predication versus branching.
+  // Branching costs:
+  //    (prob_t_branch * num_t_branch_cycles) +
+  //    (prob_f_branch * num_f_branch_cycles) +
+  //    branch_cost +
+  //    misdirect_penalty
+  //
+  // Predicating costs:
+  //    num_t_branch_cycles +
+  //    num_f_branch_cycles +
+  //    extra_t_predicate_cycles +
+  //    extra_f_predicate_cycles
+
+  unsigned TUnpredCost = Probability.getNumerator() * TCycles;
+  TUnpredCost /= Probability.getDenominator();
+
+  // TODO: Check the math.
+  uint32_t Comp = Probability.getDenominator() - Probability.getNumerator();
+  unsigned FUnpredCost = Comp * FCycles;
+  FUnpredCost /= Probability.getDenominator();
+
+  unsigned UnpredCost = TUnpredCost + FUnpredCost;
+  UnpredCost += 1; // The branch itself
+  // TODO: Do ARCompact misprediction penalty costs.
+  //UnpredCost += Subtarget.getMispredictionPenalty() / 10;
+  UnpredCost += 10 / 10;
+
+  return (TCycles + FCycles + TExtra + FExtra) <= UnpredCost;
 }
