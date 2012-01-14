@@ -150,7 +150,7 @@ void ARCompactAsmPrinter::printPredicateOperand(const MachineInstr *MI,
   ARCCC::CondCodes CC = (ARCCC::CondCodes) MI->getOperand(OpNum).getImm();
   // AL is the default, do not print it.
   if (CC != ARCCC::COND_AL) {
-    O << ARCCCToString(CC);
+    O << "." << ARCCCToString(CC);
   }
 }
 
