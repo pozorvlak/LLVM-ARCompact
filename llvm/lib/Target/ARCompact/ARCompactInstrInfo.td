@@ -264,7 +264,7 @@ let Defs = [STATUS32], Uses = [STATUS32] in {
 //    commutative and so does not allow immediates on the LHS. Instead, this
 //    situation is converted to "add a,b,limm" automatically.
 
-defm ADD : GenPurposeInst<"add", add>;
+defm ADD : ALUOp<"add", add>;
 
 // Carry-producing add.
 // TODO: Fold into a multi-class.
@@ -557,7 +557,7 @@ def NOTrli : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
 //    Takes the logical bitwise OR of the source operands, and places the
 //    result into the destination register.
 
-defm OR : GenPurposeInst<"or", or>;
+defm OR : ALUOp<"or", or>;
 
 // SBC - page 302.
 //    Subtracts the second source operand from the first, and then also
@@ -632,7 +632,7 @@ def STrri_a : Pseudo<(outs), (ins MEMri:$addr, CPURegs:$src),
 //    Subtracts the second source operand from the first, and places the result
 //    into the destination register.
 
-defm SUB : GenPurposeInst<"sub", sub>;
+defm SUB : ALUOp<"sub", sub>;
 
 // SUB also supports a "SUB a,limm,c" format.
 def SUBlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
@@ -652,7 +652,7 @@ let Defs = [STATUS32] in {
 //    Takes the logical bitwise XOR of the source operands, and places the
 //    result into the destination register.
 
-defm XOR : GenPurposeInst<"xor", xor>;
+defm XOR : ALUOp<"xor", xor>;
 
 //===----------------------------------------------------------------------===//
 // ARCompact Non-Instruction Patterns.
