@@ -226,8 +226,6 @@ bool ARCompactInstrInfo::ReverseBranchCondition(
 
 bool ARCompactInstrInfo::PredicateInstruction (MachineInstr *MI,
     const SmallVectorImpl<MachineOperand> &Pred) const {
-  unsigned Opc = MI->getOpcode();
-
   int PIdx = MI->findFirstPredOperandIdx();
   if (PIdx != -1) {
     // Get the predicate operand, and replace it with the condition
