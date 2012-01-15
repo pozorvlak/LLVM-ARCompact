@@ -83,6 +83,8 @@ def ADDRrr : ComplexPattern<i32, 2, "SelectADDRrr", [frameindex], []>;
 def ADDRrli : ComplexPattern<i32, 2, "SelectADDRrli", [frameindex], []>;
 def ADDRlir : ComplexPattern<i32, 2, "SelectADDRlir", [frameindex], []>;
 
+class BinOpFrag<dag res> : PatFrag<(ops node:$LHS, node:$RHS), res>;
+
 //===----------------------------------------------------------------------===//
 // ARCompact Operand Definitions.
 //===----------------------------------------------------------------------===//
@@ -172,7 +174,7 @@ multiclass GenPurposeInst<string opstring, SDNode OpNode> {
 
 // Note the enforcement of $src1 = $dst1 for <.cc> is done by isPredicable in
 // ARCompactInstrInfo.cpp.
-multiclass ALUOp<string opstring, SDNode OpNode> {
+multiclass ALUOp<string opstring, PatFrag OpNode> {
   def rr : Pseudo<(outs CPURegs:$dst),
                   (ins CPURegs:$src1, CPURegs:$src2, pred:$cc),
                   !strconcat(opstring, "$cc $dst,$src1,$src2"),
@@ -264,7 +266,7 @@ let Defs = [STATUS32], Uses = [STATUS32] in {
 //    commutative and so does not allow immediates on the LHS. Instead, this
 //    situation is converted to "add a,b,limm" automatically.
 
-defm ADD : ALUOp<"add", add>;
+defm ADD : ALUOp<"add", BinOpFrag<(add node:$LHS, node:$RHS)>>;
 
 // Carry-producing add.
 // TODO: Fold into a multi-class.
@@ -279,7 +281,7 @@ let Defs = [STATUS32] in {
 //    Takes the logical bitwise AND of two source operands, and places the
 //    result into the destination register.
 
-defm AND : ALUOp<"and", and>;
+defm AND : ALUOp<"and", BinOpFrag<(and node:$LHS, node:$RHS)>>;
 
 // ASL - Page 192.
 //    Arithmetically shifts the source operand left, and places the result in
@@ -360,6 +362,13 @@ let isBranch = 1, isTerminator = 1 in {
                        [(ARCbrcc bb:$dst, imm:$cc)]>;
   } // Uses = [STATUS32]
 } // isBranch, isTerminator
+
+// BIC - Page 211.
+//    Takes the logical bitwise AND of the first source operand with the
+//    inverse (logical NOT) of the second source operand, and places the
+//    result into the destination register.
+
+defm BIC : ALUOp<"bic", BinOpFrag<(and node:$LHS, (not node:$RHS))>>;
 
 // BLcc - Page 212.
 //    When the specified condition code is met (cc = true in the unconditional
@@ -557,7 +566,7 @@ def NOTrli : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
 //    Takes the logical bitwise OR of the source operands, and places the
 //    result into the destination register.
 
-defm OR : ALUOp<"or", or>;
+defm OR : ALUOp<"or", BinOpFrag<(or node:$LHS, node:$RHS)>>;
 
 // SBC - page 302.
 //    Subtracts the second source operand from the first, and then also
@@ -632,7 +641,7 @@ def STrri_a : Pseudo<(outs), (ins MEMri:$addr, CPURegs:$src),
 //    Subtracts the second source operand from the first, and places the result
 //    into the destination register.
 
-defm SUB : ALUOp<"sub", sub>;
+defm SUB : ALUOp<"sub", BinOpFrag<(sub node:$LHS, node:$RHS)>>;
 
 // SUB also supports a "SUB a,limm,c" format.
 def SUBlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
@@ -652,7 +661,7 @@ let Defs = [STATUS32] in {
 //    Takes the logical bitwise XOR of the source operands, and places the
 //    result into the destination register.
 
-defm XOR : ALUOp<"xor", xor>;
+defm XOR : ALUOp<"xor", BinOpFrag<(xor node:$LHS, node:$RHS)>>;
 
 //===----------------------------------------------------------------------===//
 // ARCompact Non-Instruction Patterns.
