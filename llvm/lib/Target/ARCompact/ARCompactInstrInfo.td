@@ -172,9 +172,12 @@ multiclass GenPurposeInst<string opstring, SDNode OpNode> {
   //       multi-class.
 }
 
+// Models generic ALU operations that do not have a 16-bit version. (See
+// page 91.)
+//
 // Note the enforcement of $src1 = $dst1 for <.cc> is done by isPredicable in
 // ARCompactInstrInfo.cpp.
-multiclass ALUOp<string opstring, PatFrag OpNode> {
+multiclass ALUOp_no16<string opstring, PatFrag OpNode> {
   def rr : Pseudo<(outs CPURegs:$dst),
                   (ins CPURegs:$src1, CPURegs:$src2, pred:$cc),
                   !strconcat(opstring, "$cc $dst,$src1,$src2"),
@@ -202,6 +205,17 @@ multiclass ALUOp<string opstring, PatFrag OpNode> {
                    (ins CPURegs:$src1, i32imm:$src2, pred:$cc),
                    !strconcat(opstring, "$cc $dst,$src1,$src2"),
                    [(set CPURegs:$dst, (OpNode CPURegs:$src1, limm32:$src2))]>;
+}
+
+// Models generic ALU operations that do have a 16-bit version. (See pages
+// 90-91).
+//
+// Note the enforcement of $src1 = $dst1 for <.cc> is done by isPredicable in
+// ARCompactInstrInfo.cpp.
+multiclass ALUOp<string opstring, PatFrag OpNode> : ALUOp_no16<opstring, OpNode> {
+  // Plus define the 16-bit version.
+  // TODO: Define the 16-bit version.
+  def placeholder : Pseudo<(outs), (ins), "", []>;
 }
 
 
