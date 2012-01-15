@@ -84,6 +84,7 @@ def ADDRrli : ComplexPattern<i32, 2, "SelectADDRrli", [frameindex], []>;
 def ADDRlir : ComplexPattern<i32, 2, "SelectADDRlir", [frameindex], []>;
 
 class BinOpFrag<dag res> : PatFrag<(ops node:$LHS, node:$RHS), res>;
+class UnOpFrag <dag res> : PatFrag<(ops node:$Src), res>;
 
 //===----------------------------------------------------------------------===//
 // ARCompact Operand Definitions.
@@ -220,20 +221,20 @@ multiclass ALUOp<string opstring, PatFrag OpNode> : ALUOp_no16<opstring, OpNode>
 
 // Models generic single operand operations that do not have a 16-bit version.
 // (See page 101.)
-multiclass SingleOperand_Op<string OpString, PatFrag OpNode> {
+multiclass SingleOperandOp_no16<string OpString, PatFrag OpNode> {
   def r : Pseudo<(outs CPURegs:$dst),
                  (ins CPURegs:$src),
-                 !strconcat(OpString, " $dst,$src",
+                 !strconcat(OpString, " $dst,$src"),
                  [(set CPURegs:$dst, (OpNode CPURegs:$src))]>;
 
   def ui : Pseudo<(outs CPURegs:$dst),
                   (ins i32imm:$src),
-                  !strconcat(OpString, " $dst,$src",
+                  !strconcat(OpString, " $dst,$src"),
                   [(set CPURegs:$dst, (OpNode uimm6:$src))]>;
 
   def li : Pseudo<(outs CPURegs:$dst),
                   (ins i32imm:$src),
-                  !strconcat(OpString, " $dst,$src",
+                  !strconcat(OpString, " $dst,$src"),
                   [(set CPURegs:$dst, (OpNode limm32:$src))]>;
 }
 
@@ -333,26 +334,11 @@ defm AND : ALUOp<"and", BinOpFrag<(and node:$LHS, node:$RHS)>>;
 //    5 bits of the source will be used.
 
 // Single-shift versions.
-def ASLr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
-                  "asl $dst,$src",
-                  [(set CPURegs:$dst, (shl CPURegs:$src, 1))]>;
-
-def ASLui : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
-                  "asl $dst,$src",
-                  [(set CPURegs:$dst, (shl uimm6:$src, 1))]>;
-
-def ASLli : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
-                  "asl $dst,$src",
-                  [(set CPURegs:$dst, (shl limm32:$src, 1))]>;
+defm ASL : SingleOperandOp<"asl", UnOpFrag<(shl node:$Src, 1)>>;
 
 // Multiple-shift versions.
 // TODO: Model the 5-bit limit somehow.
-defm ASL : GenPurposeInst<"asl", shl>;
-
-// ASL also supports an "ASL a,limm,c" format.
-def ASLlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
-                    "asl $dst,$src1,$src2",
-                    [(set CPURegs:$dst, (shl limm32:$src1, CPURegs:$src2))]>;
+defm ASL : ALUOp<"asl", BinOpFrag<(shl node:$LHS, node:$RHS)>>;
 
 // ASR - Page 197.
 //    Arithmetically shifts the source operand right, and places the result in
@@ -362,21 +348,11 @@ def ASLlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
 //    5 bits of the source will be used.
 
 // Single-shift versions.
-def ASRr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
-                  "asr $dst,$src",
-                  [(set CPURegs:$dst, (sra CPURegs:$src, 1))]>;
-
-def ASRui : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
-                  "asr $dst,$src",
-                  [(set CPURegs:$dst, (sra uimm6:$src, 1))]>;
-
-def ASRli : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
-                  "asr $dst,$src",
-                  [(set CPURegs:$dst, (sra limm32:$src, 1))]>;
+defm ASR : SingleOperandOp<"asr", UnOpFrag<(sra node:$Src, 1)>>;
 
 // Multiple-shift versions.
 // TODO: Model the 5-bit limit somehow?
-defm ASR : GenPurposeInst<"asr", sra>;
+defm ASR : ALUOp<"asr", BinOpFrag<(sra node:$LHS, node:$RHS)>>;
 
 // ASR also supports a "ASR a,limm,c" format.
 def ASRlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
@@ -531,26 +507,11 @@ def LDri_ab : Pseudo<(outs CPURegs:$src), (ins MEMri:$addr),
 //    5 bits of the source will be used.
 
 // Single-shift versions.
-def LSRr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
-                  "lsr $dst,$src",
-                  [(set CPURegs:$dst, (srl CPURegs:$src, 1))]>;
-
-def LSRui : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
-                  "lsr $dst,$src",
-                  [(set CPURegs:$dst, (srl uimm6:$src, 1))]>;
-
-def LSRli : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
-                  "lsr $dst,$src",
-                  [(set CPURegs:$dst, (srl limm32:$src, 1))]>;
+defm LSR : SingleOperandOp<"lsr", UnOpFrag<(srl node:$Src, 1)>>;
 
 // Multiple-shift versions.
 // TODO: Model the 5-bit limit somehow?
-defm LSR : GenPurposeInst<"lsr", srl>;
-
-// LSR also supports a "LSR a,limm,c" format.
-def LSRlir : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src1, CPURegs:$src2),
-                    "lsr $dst,$src1,$src2",
-                    [(set CPURegs:$dst, (srl limm32:$src1, CPURegs:$src2))]>;
+defm LSR : ALUOp<"lsr", BinOpFrag<(srl node:$LHS, node:$RHS)>>;
 
 // MOV - Page 262.
 //    The contents of the source are moved into the destination register.
