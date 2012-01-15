@@ -4,7 +4,7 @@ import os
 import commands
 
 clang_loc = "~/Clang/bin/clang"
-llvm_loc = "../build/Release+Asserts/bin/llc"
+llvm_loc = "../build/Debug+Asserts/bin/llc"
 log_file = None
 
 # Captures the necessary output formats to make bash show colour.
