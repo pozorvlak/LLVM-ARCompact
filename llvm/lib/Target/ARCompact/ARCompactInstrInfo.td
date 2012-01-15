@@ -545,25 +545,17 @@ let isAsCheapAsAMove = 1 in {
 //
 //    NEG only has a register-to-register version.
 
-def NEGrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
-                   "neg $dst,$src",
+// Note the enforcement of $src = $dst for <.cc> is done by isPredicable in
+// ARCompactInstrInfo.cpp.
+def NEGrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src, pred:$cc),
+                   "neg$cc $dst,$src",
                    [(set CPURegs:$dst, (ineg CPURegs:$src))]>;
 
 // NOT - page 283.
 //    Takes the logical bitwise NOT of the source operand, and places the
 //    result into the destination register.
 
-def NOTrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
-                   "not $dst,$src",
-                   [(set CPURegs:$dst, (not CPURegs:$src))]>;
-
-def NOTrui : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
-                    "not $dst,$src",
-                    [(set CPURegs:$dst, (not uimm6:$src))]>;
-
-def NOTrli : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
-                    "not $dst,$src",
-                    [(set CPURegs:$dst, (not uimm6:$src))]>;
+defm NOT : SingleOperandOp<"not", UnOpFrag<(not node:$Src)>>;
 
 // OR - page 284.
 //    Takes the logical bitwise OR of the source operands, and places the
