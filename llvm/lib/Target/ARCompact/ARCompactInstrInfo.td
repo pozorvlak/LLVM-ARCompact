@@ -586,21 +586,17 @@ let Defs = [STATUS32], Uses = [STATUS32] in {
 //    Sign extends the byte contained in the source operand to the most
 //    significant bit in a long word (32-bits) and places the result in
 //    the destination register.
-// TODO: Add u6 and limm versions.
 
-def SEXBrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
-                    "sexb $dst,$src",
-                    [(set CPURegs:$dst, (sext_inreg CPURegs:$src, i8))]>;
+// TODO: These may not be right. Maybe should use sext?
+defm SEXB : SingleOperandOp<"sexb", UnOpFrag<(sext_inreg node:$Src, i8)>>;
 
 // SEXW - page 304.
 //    Sign extends the word (16-bits) contained in the source operand to the
 //    most significant bit in a long word (32-bits) and places the result in
 //    the destination register.
-// TODO: Add u6 and limm versions.
 
-def SEXWrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
-                    "sexw $dst,$src",
-                    [(set CPURegs:$dst, (sext_inreg CPURegs:$src, i16))]>;
+// TODO: These may not be right. Maybe should use sext?
+defm SEXW : SingleOperandOp<"sexw", UnOpFrag<(sext_inreg node:$Src, i16)>>;
 
 // ST - page 310.
 //    Stores the value stored in the source operand in the destination memory
