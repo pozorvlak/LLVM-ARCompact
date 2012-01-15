@@ -215,7 +215,35 @@ multiclass ALUOp_no16<string opstring, PatFrag OpNode> {
 multiclass ALUOp<string opstring, PatFrag OpNode> : ALUOp_no16<opstring, OpNode> {
   // Plus define the 16-bit version.
   // TODO: Define the 16-bit version.
-  def placeholder : Pseudo<(outs), (ins), "", []>;
+  def alu_placeholder : Pseudo<(outs), (ins), "", []>;
+}
+
+// Models generic single operand operations that do not have a 16-bit version.
+// (See page 101.)
+multiclass SingleOperand_Op<string OpString, PatFrag OpNode> {
+  def r : Pseudo<(outs CPURegs:$dst),
+                 (ins CPURegs:$src),
+                 !strconcat(OpString, " $dst,$src",
+                 [(set CPURegs:$dst, (OpNode CPURegs:$src))]>;
+
+  def ui : Pseudo<(outs CPURegs:$dst),
+                  (ins i32imm:$src),
+                  !strconcat(OpString, " $dst,$src",
+                  [(set CPURegs:$dst, (OpNode uimm6:$src))]>;
+
+  def li : Pseudo<(outs CPURegs:$dst),
+                  (ins i32imm:$src),
+                  !strconcat(OpString, " $dst,$src",
+                  [(set CPURegs:$dst, (OpNode limm32:$src))]>;
+}
+
+// Models generic single operand operations that have a 16-bit version. (See
+// page 101.)
+multiclass SingleOperandOp<string OpString, PatFrag OpNode>
+    : SingleOperandOp_no16<OpString, OpNode> {
+  // Plus define the 16-bit version.
+  // TODO: Define the 16-bit version.
+  def singleop_placeholder : Pseudo<(outs), (ins), "", []>;
 }
 
 
