@@ -1,7 +1,9 @@
 Definitely not complete :).
 
-1. Implement .cc flags. (See IRC excerpt below.)
-2. 
+1. Implement .cc flags. (See IRC excerpt below.). This is now mostly done.
+2. Change all tests to use .ll files for now, rather than .c.
+3. Implement .f flags - HOW?
+4.
 
 
 
