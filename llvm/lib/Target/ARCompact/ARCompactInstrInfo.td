@@ -320,6 +320,25 @@ let Defs = [STATUS32] in {
                             (addc CPURegs:$src1, CPURegs:$src2))]>;
 }
 
+// ADD1 - Page 182
+//    Add the first source operand to the second source operand bit-shifted
+//    left once (src2 << 1), and place the result in the destination register.
+
+defm ADD1 : ALUOp<"add1", BinOpFrag<(add node:$LHS, (shl node:$RHS, 1))>>;
+
+// ADD2 - Page 182
+//    Add the first source operand to the second source operand bit-shifted
+//    left twice (src2 << 2), and place the result in the destination register.
+
+defm ADD2 : ALUOp<"add2", BinOpFrag<(add node:$LHS, (shl node:$RHS, 2))>>;
+
+// ADD3 - Page 182
+//    Add the first source operand to the second source operand bit-shifted
+//    left three bits (src2 << 3), and place the result in the destination
+//    register.
+
+defm ADD3 : ALUOp<"add3", BinOpFrag<(add node:$LHS, (shl node:$RHS, 3))>>;
+
 // AND - Page 191.
 //    Takes the logical bitwise AND of two source operands, and places the
 //    result into the destination register.
