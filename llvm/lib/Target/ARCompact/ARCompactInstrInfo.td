@@ -448,6 +448,14 @@ let isCall = 1 in {
 // TODO: Not actually ALUOp, should specify correct class.
 defm BSET : ALUOp<"bset", BinOpFrag<(or node:$LHS, (shl 1, node:$RHS))>>;
 
+// BXOR - Page 224.
+//    Toggles a bit in the value given by the first source operand; the 
+//    position is given by the value in the second source operand. The result
+//    is placed in the destination register.
+
+// TODO: Not actually ALUOp, should specify correct class.
+defm BXOR : ALUOp<"bxor", BinOpFrag<(xor node:$LHS, (shl 1, node:$RHS))>>;
+
 // CMP - Page 225.
 //    Performs a comparison by subtracting the second source operand from the
 //    first, updating the condition flags based on the result. The actual
