@@ -400,6 +400,15 @@ let isBranch = 1, isTerminator = 1 in {
   } // Uses = [STATUS32]
 } // isBranch, isTerminator
 
+// BCLR - Page 210.
+//    Clear a bit in the value given by the first source operand; the position
+//    is given by the value in the second source operand. The result is placed
+//    in the destination register.
+
+// TODO: Not actually an ALUOp, should specify correct class.
+defm BCLR : ALUOp<"bclr", BinOpFrag<(and node:$LHS, 
+                                        (not (shl 1, node:$RHS)))>>;
+
 // BIC - Page 211.
 //    Takes the logical bitwise AND of the first source operand with the
 //    inverse (logical NOT) of the second source operand, and places the
