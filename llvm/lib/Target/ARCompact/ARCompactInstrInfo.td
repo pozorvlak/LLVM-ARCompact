@@ -440,6 +440,17 @@ let isCall = 1 in {
   } // Defs = [STATUS32], Uses = [SP]
 } // isCall
 
+// BMSK - Page 214.
+//    Applies a bitmask made up of logical 1s starting from the LSB up to and
+//    including the position specified by the second source operand to the
+//    value specified in the first source operand. The result is placed in
+//    the destination register.
+
+// TODO: Not actually ALUOp, should specify correct class.
+// TODO: Doesn't seem to match test.
+defm BMSK : ALUOp<"bmsk", BinOpFrag<(and node:$LHS, 
+                                        (add (shl 1, (add node:$RHS, 1)), -1))>>;
+
 // BSET - Page 222.
 //    Sets a bit in the value given by the first source operand; the position
 //    is given by the value in the second source operand. The result is placed
