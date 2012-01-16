@@ -667,6 +667,27 @@ let Defs = [STATUS32] in {
                             (subc CPURegs:$src1, CPURegs:$src2))]>;
 }
 
+// SUB1 - Page 314.
+//    Subtracts the second source operand bit-shifted left once (src2 << 1)
+//    from the first source operand, and places the result in the destination 
+//    register.
+
+defm SUB1 : ALUOp<"sub1", BinOpFrag<(sub node:$LHS, (shl node:$RHS, 1))>>;
+
+// SUB2 - Page 314.
+//    Subtracts the second source operand bit-shifted left twice (src2 << 2)
+//    from the first source operand, and places the result in the destination 
+//    register.
+
+defm SUB2 : ALUOp<"sub2", BinOpFrag<(sub node:$LHS, (shl node:$RHS, 2))>>;
+
+// SUB3 - Page 314.
+//    Subtracts the second source operand bit-shifted left three bits
+//    (src2 << 3) from the first source operand, and places the result in 
+//    the destination register.
+
+defm SUB3 : ALUOp<"sub3", BinOpFrag<(sub node:$LHS, (shl node:$RHS, 3))>>;
+
 // XOR - page 332.
 //    Takes the logical bitwise XOR of the source operands, and places the
 //    result into the destination register.
