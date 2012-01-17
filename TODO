@@ -1,56 +1,10 @@
 Definitely not complete :).
 
-1. Implement .cc flags. (See IRC excerpt below.). This is now mostly done.
-2. Change all tests to use .ll files for now, rather than .c.
-3. Implement .f flags - HOW?
-4.
-
-
-
-
-
-###################
-IRC Excerpt for .cc
-###################
-
-15:16 < Stephen|Edibles> As far as I can tell from websources, ARM has individual instruction conditional execution (e.g. ADDEQ). Does the LLVM backend 
-implement this?
-15:17 < Stephen|Edibles> I ask because my own target has something similar.
-15:19 <@aKor> Stephen|Edibles: yes
-15:19 <@aKor> Stephen|Edibles: ARM MI's has bond code field
-15:19 <@aKor> if conversion pass normally sets them
-15:21 -!- jophish [~jophish@oriel-student-nat.oriel.ox.ac.uk] has joined #llvm
-15:21 < Stephen|Edibles> Sorry, is that a ARM-specific or general pass?
-15:23 <@aKor> Stephen|Edibles: pass is general, but requires decent amount of target hooks to be implemented
-15:24 <@aKor> look into include/llvm/Target/TargetInstrInfo.h
-15:24 <@aKor> grep for "ifcvt"
-15:24 -!- jophish_ [~jophish@client-7-218.eduroam.oxuni.org.uk] has joined #llvm
-15:24 <@aKor> or "predicate"
-15:25 -!- nemesit [~nemesit@fbivpn.informatik.uni-hamburg.de] has quit [Quit: Leaving...]
-15:25 <@aKor> Stephen|Edibles: (e.g. "isPredicable" and around)
-15:25 <@aKor> also you should implement some amount of hooks to reverse branch conditions, etc.
-15:25 -!- thakis_ [~thakis@216-239-45-4.google.com] has joined #llvm
-15:27 < asmodai> Mmm, is there anyone documenting on problems encountered trying to use clang with the Windows SDK/drop-in replacement for Microsoft's 
-compiler?
-15:28 <@aKor> asmodai: I don't think so. But I'd expect rather few amount of problems in C code, and bunch - for C++
-15:29 <@aKor> Stephen|Edibles: note that pass is not run by default, you should schedule it by hands
-15:30 <@aKor> Stephen|Edibles: see ARMTargetMachine.cpp, look for "createIfConverterPass()"
-15:33 < Stephen|Edibles> aKor: Thanks, I'll have a look into that. 
-...
-16:47 <@aKor> Stephen|Edibles: in your case ifcvt decides that the function does not worth if conversion
-16:48 <@aKor> Stephen|Edibles: Inside test/CodeGen/ARM/ifcvt*.ll there is some amount of ifcvt-related tests
-16:51 < Stephen|Edibles> aKor: Yeah, but I'm currently struggling to find the way that ARM notes which instructions *can* be converted, and what to. I found 
-the ifcvt hooks, but they don't specify the instructions. I apologise if I'm being dumb here :). I'll have a ;ppl at the 
-test/CodeGen/ARM and see if I can use llc's debug to find out.
-16:52 <@aKor> Stephen|Edibles: there are other hooks, namely:
-16:52 <@aKor> 1. Stuff used to reverse branches
-16:52 <@aKor> 2. Stuff operates on predicates
-16:53 <@aKor> as I said, grep for "predicate"
-16:53 <@aKor> and around
-16:53 <@aKor> e.g. isPredicated
-16:53 <@aKor> PredicateInstruction
-16:53 <@aKor> SubsumesPredicate
-16:53 <@aKor> DefinesPredicate
-16:54 <@aKor> isPredicable
-16:54 <@aKor> etc.
-
+1. Bring all tests up to date.
+  1.1. Implement tests for uncovered instructions - Bcc, etc.
+  1.2. Make all tests fully cover instructions - <.cc> versions, etc.
+2. Implement extb, extw, and sextw.
+3. Implement the correct multiclass for bit operations.
+4. Implement max, min.
+5. Implement mul.
+6. Work out how to implement <.f> flags for STATUS32 update.
