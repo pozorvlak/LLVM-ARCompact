@@ -1,54 +1,67 @@
 	.file	"./and_test/test.bc"
 	.text
-	.globl	f
-	.type	f,@function
-f:                                      ; @f
+	.globl	rr
+	.type	rr,@function
+rr:                                     ; @rr
 ; BB#0:
 	; PROLOGUE START
 	st.a fp,[sp,-4]
 	mov fp,sp
-	sub sp,sp,24
 	; PROLOGUE END
-	st r0,[fp,-4]
-	st r1,[fp,-8]
-	ld r0,[fp,-4]
 	and r0,r0,r1
-	st r0,[fp,-12]
-	ld r0,[fp,-4]
-	and r0,r0,4
-	st r0,[fp,-16]
-	ld r0,[fp,-4]
-	and r0,r0,-104
-	st r0,[fp,-20]
-	ld r0,[fp,-4]
-	and r0,r0,6000
-	st r0,[fp,-24]
-	mov r0,0
 	; EPILOGUE START
-	add sp,sp,24
 	ld.ab fp,[sp,4]
 	j [blink]
 	; EPILOGUE END
 .tmp0:
-	.size	f, .tmp0-f
+	.size	rr, .tmp0-rr
 
-	.globl	main
-	.type	main,@function
-main:                                   ; @main
+	.globl	rui
+	.type	rui,@function
+rui:                                    ; @rui
 ; BB#0:
 	; PROLOGUE START
 	st.a fp,[sp,-4]
 	mov fp,sp
-	sub sp,sp,4
 	; PROLOGUE END
-	st 0,[fp,-4]
-	mov r0,0
+	and r0,r0,4
 	; EPILOGUE START
-	add sp,sp,4
 	ld.ab fp,[sp,4]
 	j [blink]
 	; EPILOGUE END
 .tmp1:
-	.size	main, .tmp1-main
+	.size	rui, .tmp1-rui
+
+	.globl	rsi
+	.type	rsi,@function
+rsi:                                    ; @rsi
+; BB#0:
+	; PROLOGUE START
+	st.a fp,[sp,-4]
+	mov fp,sp
+	; PROLOGUE END
+	and r0,r0,-104
+	; EPILOGUE START
+	ld.ab fp,[sp,4]
+	j [blink]
+	; EPILOGUE END
+.tmp2:
+	.size	rsi, .tmp2-rsi
+
+	.globl	rli
+	.type	rli,@function
+rli:                                    ; @rli
+; BB#0:
+	; PROLOGUE START
+	st.a fp,[sp,-4]
+	mov fp,sp
+	; PROLOGUE END
+	and r0,r0,6000
+	; EPILOGUE START
+	ld.ab fp,[sp,4]
+	j [blink]
+	; EPILOGUE END
+.tmp3:
+	.size	rli, .tmp3-rli
 
 

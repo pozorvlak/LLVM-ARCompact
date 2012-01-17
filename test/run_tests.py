@@ -3,8 +3,8 @@
 import os
 import commands
 
-clang_loc = "~/Clang/bin/clang"
-llvm_loc = "../build/Debug+Asserts/bin/llc"
+llvm_as_loc = "../build/Debug+Asserts/bin/llvm-as"
+llc_loc = "../build/Debug+Asserts/bin/llc"
 log_file = None
 
 # Captures the necessary output formats to make bash show colour.
@@ -28,21 +28,20 @@ def log_error(test, text):
     log_file.write(text)
     log_file.write("\n\n")
 
-# Runs Clang on the given input filename, producing a file with the
+# Runs llvm-as on the given input filename, producing a file with the
 # given output filename.
-def run_clang(input_file, output_file):
-  command = clang_loc + " -emit-llvm " + input_file + " -c -o " + output_file
+def run_llvm_as(input_file, output_file):
+  command = llvm_as_loc + " " + input_file + " -o " + output_file
   status, output = commands.getstatusoutput(command)
   return status, output
 
 # Runs llc on the given input filename, producing a file with the
 # given output filename.
 def run_llc(input_file, output_file):
-  command = llvm_loc + " -march=arcompact -filetype=asm " + input_file + \
+  command = llc_loc + " -O3 -march=arcompact -filetype=asm " + input_file + \
       " -o " + output_file
   status, output = commands.getstatusoutput(command)
   return status, output
-
 
 def main():
   # First clear the log file.
@@ -60,20 +59,21 @@ def main():
       continue
 
     test_folder = "./" + entry
-    test_c = test_folder + "/test.c"
+    test_ll = test_folder + "/test.ll"
     test_bc = test_folder + "/test.bc"
     test_s = test_folder + "/test.s"
     old_s = test_folder + "/old.s"
 
-    c_file_exists = os.path.isfile(test_c)
+    ll_file_exists = os.path.isfile(test_ll)
     bc_file_exists = os.path.isfile(test_bc)
 
-    if bc_file_exists and c_file_exists:
-      if os.path.getmtime(test_c) > os.path.getmtime(test_bc):
-        status, output = run_clang(test_c, test_bc)
+    if bc_file_exists:
+      if ll_file_exists and \
+          os.path.getmtime(test_ll) > os.path.getmtime(test_bc):
+        status, output = run_llvm_as(test_ll, test_bc)
         if status != 0:
           output_text(OutputType.WARNING, entry + ":\tWARNING! " + \
-              "Unable to compile test.c. " + \
+              "Unable to compile test.ll. " + \
               "Error message written to test_log.txt")
           log_error(entry, output)
           continue
@@ -83,11 +83,11 @@ def main():
             "Unable to compile test.bc. Error message written to test_log.txt")
         log_error(entry, output)
         continue
-    elif c_file_exists:
-      status, output = run_clang(test_c, test_bc)
+    elif ll_file_exists:
+      status, output = run_llvm_as(test_ll, test_bc)
       if status != 0:
         output_text(OutputType.WARNING, entry + ":\tWARNING! " + \
-            "Unable to compile test.c. Error message written to test_log.txt")
+            "Unable to compile test.ll. Error message written to test_log.txt")
         log_error(entry, output)
         continue
       status, output = run_llc(test_bc, test_s)
@@ -98,7 +98,7 @@ def main():
         continue
     else:
       output_text(OutputType.WARNING, entry + ":\tWARNING! " + \
-          "Unable to find a test.c or test.bc file.")
+          "Unable to find a test.ll or test.bc file. Skipping test.")
       continue
 
     if os.path.isfile(old_s):

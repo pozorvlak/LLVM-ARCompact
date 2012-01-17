@@ -7,12 +7,9 @@ f:                                      ; @f
 	; PROLOGUE START
 	st.a fp,[sp,-4]
 	mov fp,sp
-	sub sp,sp,4
 	; PROLOGUE END
-	st r0,[fp,-4]
 	add r0,r0,2
 	; EPILOGUE START
-	add sp,sp,4
 	ld.ab fp,[sp,4]
 	j [blink]
 	; EPILOGUE END
@@ -49,16 +46,10 @@ main:                                   ; @main
 	st.a blink,[sp,-4]
 	st.a fp,[sp,-4]
 	mov fp,sp
-	sub sp,sp,12
 	; PROLOGUE END
-	st 0,[fp,-4]
-	st 5,[fp,-8]
 	bl @g
-	st r0,[fp,-12]
-	ld r1,[fp,-8]
-	add r0,r1,r0
+	add r0,r0,5
 	; EPILOGUE START
-	add sp,sp,12
 	ld.ab fp,[sp,4]
 	ld.ab sp,[blink,4]
 	j [blink]
