@@ -3,8 +3,7 @@ Definitely not complete :).
 1. Bring all tests up to date.
   1.1. Implement tests for uncovered instructions - Bcc, etc.
   1.2. Make all tests fully cover instructions - <.cc> versions, etc.
-2. Implement extb, extw, and sextw.
-3. Implement the correct multiclass for bit operations.
-4. Implement max, min.
-5. Implement mul.
-6. Work out how to implement <.f> flags for STATUS32 update.
+2. Implement the correct multiclass for bit operations.
+3. Implement max, min.
+4. Implement mul.
+5. Work out how to implement <.f> flags for STATUS32 update.

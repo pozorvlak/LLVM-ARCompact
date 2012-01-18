@@ -406,7 +406,7 @@ let isBranch = 1, isTerminator = 1 in {
 //    in the destination register.
 
 // TODO: Not actually an ALUOp, should specify correct class.
-defm BCLR : ALUOp<"bclr", BinOpFrag<(and node:$LHS, 
+defm BCLR : ALUOp<"bclr", BinOpFrag<(and node:$LHS,
                                         (not (shl 1, node:$RHS)))>>;
 
 // BIC - Page 211.
@@ -448,7 +448,7 @@ let isCall = 1 in {
 
 // TODO: Not actually ALUOp, should specify correct class.
 // TODO: Doesn't seem to match test.
-defm BMSK : ALUOp<"bmsk", BinOpFrag<(and node:$LHS, 
+defm BMSK : ALUOp<"bmsk", BinOpFrag<(and node:$LHS,
                                         (add (shl 1, (add node:$RHS, 1)), -1))>>;
 
 // BSET - Page 222.
@@ -460,12 +460,52 @@ defm BMSK : ALUOp<"bmsk", BinOpFrag<(and node:$LHS,
 defm BSET : ALUOp<"bset", BinOpFrag<(or node:$LHS, (shl 1, node:$RHS))>>;
 
 // BXOR - Page 224.
-//    Toggles a bit in the value given by the first source operand; the 
+//    Toggles a bit in the value given by the first source operand; the
 //    position is given by the value in the second source operand. The result
 //    is placed in the destination register.
 
 // TODO: Not actually ALUOp, should specify correct class.
 defm BXOR : ALUOp<"bxor", BinOpFrag<(xor node:$LHS, (shl 1, node:$RHS))>>;
+
+// EXTB - Page 230.
+//    Zero extend the byte value in the source operand and write the result
+//    into the destination register.
+//
+//    EXTB is a special case as LLVM turns 'zext $src to i8' into
+//    'and $src, 255'. Therefore, EXTB is properly matched by an
+//    anonymous pattern below.
+def EXTBr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
+                   "extb $dst,$src",
+                   []>;
+
+def EXTBui : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
+                   "extb $dst,$src",
+                   []>;
+
+def EXTBli : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
+                   "extb $dst,$src",
+                   []>;
+
+// EXTW - Page 231.
+//    Zero extend the word value in the source operand and write the result
+//    into the destination register.
+//
+//    EXTW is a special case as LLVM turns 'zext $src to i16' into
+//    'and $src, 65535'. Therefore, EXTW is properly matched by an
+//    anonymous pattern below.
+def EXTWr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src),
+                   "extw $dst,$src",
+                   []>;
+
+def EXTWui : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
+                   "extw $dst,$src",
+                   []>;
+
+
+def EXTWli : Pseudo<(outs CPURegs:$dst), (ins i32imm:$src),
+                   "extw $dst,$src",
+                   []>;
+
 
 // CMP - Page 225.
 //    Performs a comparison by subtracting the second source operand from the
@@ -705,21 +745,21 @@ let Defs = [STATUS32] in {
 
 // SUB1 - Page 314.
 //    Subtracts the second source operand bit-shifted left once (src2 << 1)
-//    from the first source operand, and places the result in the destination 
+//    from the first source operand, and places the result in the destination
 //    register.
 
 defm SUB1 : ALUOp<"sub1", BinOpFrag<(sub node:$LHS, (shl node:$RHS, 1))>>;
 
 // SUB2 - Page 314.
 //    Subtracts the second source operand bit-shifted left twice (src2 << 2)
-//    from the first source operand, and places the result in the destination 
+//    from the first source operand, and places the result in the destination
 //    register.
 
 defm SUB2 : ALUOp<"sub2", BinOpFrag<(sub node:$LHS, (shl node:$RHS, 2))>>;
 
 // SUB3 - Page 314.
 //    Subtracts the second source operand bit-shifted left three bits
-//    (src2 << 3) from the first source operand, and places the result in 
+//    (src2 << 3) from the first source operand, and places the result in
 //    the destination register.
 
 defm SUB3 : ALUOp<"sub3", BinOpFrag<(sub node:$LHS, (shl node:$RHS, 3))>>;
@@ -741,6 +781,20 @@ def : Pat<(add CPURegs:$src1, (ARCWrapper tglobaladdr:$src2)),
 
 // Calls.
 def : Pat<(ARCcall (i32 tglobaladdr:$dst)), (BLi tglobaladdr:$dst)>;
+
+// EXTB is modelled by llvm as 'and $src, 255'.
+// The second two of these definitions are unlikely ever to be seen (LLVM just
+// turns them into constant movs), but they are included for completeness.
+def : Pat<(and CPURegs:$src, 255), (EXTBr CPURegs:$src)>;
+def : Pat<(and uimm6:$src, 255), (EXTBui uimm6:$src)>;
+def : Pat<(and limm32:$src, 255), (EXTBli limm32:$src)>;
+
+// EXTW is modelled by llvm as 'and $src, 65535'.
+// The second two of these definitions are unlikely ever to be seen (LLVM just
+// turns them into constant movs), but they are included for completeness.
+def : Pat<(and CPURegs:$src, 65535), (EXTWr CPURegs:$src)>;
+def : Pat<(and uimm6:$src, 65535), (EXTWui uimm6:$src)>;
+def : Pat<(and limm32:$src, 65535), (EXTWli limm32:$src)>;
 
 // Integer extloads are mapped to to zextloads.
 def : Pat<(i32 (extloadi8 ADDRri:$src)), (LDri_extb ADDRri:$src)>;
