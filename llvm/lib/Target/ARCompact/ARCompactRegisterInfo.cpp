@@ -36,8 +36,12 @@ ARCompactRegisterInfo::ARCompactRegisterInfo(ARCompactSubtarget &st,
 
 const unsigned* ARCompactRegisterInfo::getCalleeSavedRegs(
     const MachineFunction *MF) const {
-  // TODO: Check if ARCompact has callee saved regs.
-  static const unsigned CalleeSavedRegs[] = { 0 };
+  // Taken from page 12 of the ARC GCC calling convention. Not sure
+  // if it extends to ARCompact.
+  static const unsigned CalleeSavedRegs[] = {
+    ARC::T5, ARC::T6, ARC::T7, ARC::S0, ARC::S1, ARC::S2, ARC::S3,
+    ARC::S4, ARC::S5, ARC::S6, ARC::S7, ARC::S8, ARC::S9, 0
+  };
   return CalleeSavedRegs;
 }
 
