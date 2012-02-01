@@ -58,7 +58,8 @@ ARCompactTargetLowering::ARCompactTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::BR_CC,          MVT::i32,   Custom);
   setOperationAction(ISD::BRCOND,         MVT::Other, Expand);
 
-  // SELECT is expanded to ???, SELECT_CC is lowered to a CMP and Bcc.
+  // SELECT is expanded to SELECT_CC, and SELECT_CC is custom lowered to
+  // a CMP and Bcc.
   setOperationAction(ISD::SELECT_CC,      MVT::i32,   Custom);
   setOperationAction(ISD::SELECT,         MVT::i32,   Expand);
 
@@ -524,4 +525,38 @@ MachineBasicBlock* ARCompactTargetLowering::EmitInstrWithCustomInserter(
 
   MI->eraseFromParent();   // The pseudo instruction is gone now.
   return BB;
+}
+
+#include <iostream>
+/// Do target-specific dag combines on SELECT_CC nodes.
+static SDValue PerformSELECTCCCombine(SDNode *N, SelectionDAG &DAG,
+    TargetLowering::DAGCombinerInfo &DCI) {
+  DebugLoc dl = N->getDebugLoc();
+  SDValue LHS = N->getOperand(0);
+  SDValue RHS = N->getOperand(1);
+  ISD::CondCode CC = cast<CondCodeSDNode>(N->getOperand(4))->get();
+
+  EVT ValueType = LHS.getValueType();   // LHS and RHS have same VT.
+
+  // Try to form max/min nodes.
+  //N->dump();
+  //std::cerr << std::endl << "CondCode: " << CC << std::endl;
+
+  return SDValue();
+}
+
+SDValue ARCompactTargetLowering::PerformDAGCombine(SDNode *N,
+    DAGCombinerInfo &DCI) const {
+  SelectionDAG &DAG = DCI.DAG;
+  //std::cerr << "PerformDAGCombine" << std::endl;
+  //N->dump();
+  switch (N->getOpcode()) {
+    case ISD::SELECT_CC:
+      //std::cerr << "Select!" << std::endl;
+      return PerformSELECTCCCombine(N, DAG, DCI);
+    default:
+      break;
+  }
+
+  return SDValue();
 }

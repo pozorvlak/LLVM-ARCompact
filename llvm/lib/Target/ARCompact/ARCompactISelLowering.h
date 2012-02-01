@@ -106,6 +106,13 @@ namespace llvm {
 
     MachineBasicBlock* EmitInstrWithCustomInserter(MachineInstr *MI,
         MachineBasicBlock *BB) const;
+
+    /// Combines DAG nodes before (after?) lowering. Return semantics:
+    ///     SDValue.Val == 0 if no change was made.
+    ///     SDValue.Val == N if N was replaced, is dead, & is already handled.
+    ///     Otherwise if N should be replaced by the returned Operand.
+    virtual SDValue PerformDAGCombine(SDNode *N, DAGCombinerInfo &DCI) const;
+
   };
 } // end namespace llvm
 
