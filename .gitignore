@@ -47,6 +47,20 @@ llvm/include/llvm/ADT/*
 
 !llvm/include/llvm/ADT/Triple.h
 
+# Targets.cpp
+!llvm/tools
+llvm/tools/*
+
+!llvm/tools/clang
+llvm/tools/clang/*
+
+!llvm/tools/clang/lib
+llvm/tools/clang/lib/*
+
+!llvm/tools/clang/lib/Basic
+llvm/tools/clang/lib/Basic/*
+
+!llvm/tools/clang/lib/Basic/Targets.cpp
 
 # BUILD
 # Only want to keep the make script.
