@@ -7,6 +7,9 @@
 # Ignore all tablegen generated files.
 *.inc
 
+# Ignore all svn folders.
+.svn
+
 # LLVM
 # To avoid capturing the whole of LLVM in the git repo, carefully
 # ignore everything that isn't necessary.
