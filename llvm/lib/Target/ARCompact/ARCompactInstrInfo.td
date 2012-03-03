@@ -309,7 +309,11 @@ let Defs = [STATUS32], Uses = [STATUS32] in {
 //    commutative and so does not allow immediates on the LHS. Instead, this
 //    situation is converted to "add a,b,limm" automatically.
 
-defm ADD : ALUOp<"add", BinOpFrag<(add node:$LHS, node:$RHS)>>;
+// Should be ALUOp, but ISelDAGToDAG emits an ADDrli, and I cant work out how to
+// make the predicate implicit...
+//defm ADD : ALUOp<"add", BinOpFrag<(add node:$LHS, node:$RHS)>>;
+defm ADD : GenPurposeInst<"add", add>;
+
 
 // Carry-producing add.
 // TODO: Fold into a multi-class.
@@ -633,6 +637,14 @@ let isAsCheapAsAMove = 1 in {
                       "mov $dst,$imm",
                       [(set CPURegs:$dst, limm32:$imm)]>;
 }
+
+// MPY - Page 263.
+//    Performs a signed 32-bit by 32-bit multiple of the source operands
+//    and places the least significant bits of the result in the destination
+//    register.
+def MPYrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, CPURegs:$src2),
+                    "mpy $dst,$src1,$src2",
+                    [(set CPURegs:$dst, (mul CPURegs:$src1, CPURegs:$src2))]>;
 
 // NEG - page 275.
 //    The source value is subtracted from 0 and the result placed in the
