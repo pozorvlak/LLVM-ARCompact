@@ -65,6 +65,11 @@ llvm/tools/clang/lib/Basic/*
 
 !llvm/tools/clang/lib/Basic/Targets.cpp
 
+!llvm/tools/clang/lib/Driver
+llvm/tools/clang/lib/Driver/*
+
+!llvm/tools/clang/lib/Driver/Tools.cpp
+
 # BUILD
 # Only want to keep the make script.
 
@@ -80,3 +85,7 @@ test/*/test.s
 
 # Ignore the log too.
 test/test_log.txt
+
+# BENCHMARKS
+# Ignore these.
+benchmarks/
