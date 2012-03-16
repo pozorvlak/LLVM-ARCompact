@@ -4,6 +4,7 @@ import commands
 import os.path
 import sys
 
+# TODO: This list is now out of date!
 files_to_save = ["llvm/configure", "llvm/include/llvm/ADT/Triple.h",
                  "llvm/lib/Support/Triple.cpp"]
 
