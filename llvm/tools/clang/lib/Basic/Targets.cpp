@@ -2886,10 +2886,10 @@ namespace {
     }
     virtual void getTargetDefines(const LangOptions &Opts,
         MacroBuilder &Builder) const {
-      // TODO: Implement.
       Builder.defineMacro("__arc__"); // From ARC_GCC
-      Builder.defineMacro("ARCOMPACT");
-      Builder.defineMacro("__ARCOMPACT__");
+
+      // TODO: We should not *always* be little endian.
+      Builder.defineMacro("__LITTLE_ENDIAN__");
     }
 
     virtual void getTargetBuiltins(const Builtin::Info *&Records,
