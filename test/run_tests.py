@@ -3,8 +3,8 @@
 import os
 import commands
 
-llvm_as_loc = "../build/Debug+Asserts/bin/llvm-as"
-llc_loc = "../build/Debug+Asserts/bin/llc"
+llvm_as_loc = "../build/Release+Asserts/bin/llvm-as"
+llc_loc = "../build/Release+Asserts/bin/llc"
 log_file = None
 
 # Captures the necessary output formats to make bash show colour.
