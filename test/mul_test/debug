@@ -1,0 +1,184 @@
+Args: ../../build/Debug+Asserts/bin/llc -O3 -debug -march=arcompact -filetype=asm test.bc 
+
+Features:
+CPU:encore
+
+
+=== f
+Initial selection DAG: BB#0 'f:'
+SelectionDAG has 10 nodes:
+  0x3833148: ch = EntryToken [ORD=1]
+
+    0x3833148: <multiple use>
+    0x385d2f0: i32 = Register %R0
+
+        0x3833148: <multiple use>
+        0x385cff0: i32 = Register %vreg1 [ORD=1]
+
+      0x385d0f0: i32,ch = CopyFromReg 0x3833148, 0x385cff0 [ORD=1]
+
+        0x3833148: <multiple use>
+        0x385cdf0: i32 = Register %vreg0 [ORD=1]
+
+      0x385cef0: i32,ch = CopyFromReg 0x3833148, 0x385cdf0 [ORD=1]
+
+    0x385d1f0: i32 = mul 0x385d0f0, 0x385cef0 [ORD=1]
+
+  0x385d3f0: ch,glue = CopyToReg 0x3833148, 0x385d2f0, 0x385d1f0
+
+    0x385d3f0: <multiple use>
+    0x385d4f0: i32 = Constant<8>
+
+    0x385d3f0: <multiple use>
+  0x385d5f0: ch = ARCISD::RET_FLAG 0x385d3f0, 0x385d4f0, 0x385d3f0:1
+
+
+Optimized lowered selection DAG: BB#0 'f:'
+SelectionDAG has 10 nodes:
+  0x3833148: ch = EntryToken [ORD=1]
+
+    0x3833148: <multiple use>
+    0x385d2f0: i32 = Register %R0
+
+        0x3833148: <multiple use>
+        0x385cff0: i32 = Register %vreg1 [ORD=1]
+
+      0x385d0f0: i32,ch = CopyFromReg 0x3833148, 0x385cff0 [ORD=1]
+
+        0x3833148: <multiple use>
+        0x385cdf0: i32 = Register %vreg0 [ORD=1]
+
+      0x385cef0: i32,ch = CopyFromReg 0x3833148, 0x385cdf0 [ORD=1]
+
+    0x385d1f0: i32 = mul 0x385d0f0, 0x385cef0 [ORD=1]
+
+  0x385d3f0: ch,glue = CopyToReg 0x3833148, 0x385d2f0, 0x385d1f0
+
+    0x385d3f0: <multiple use>
+    0x385d4f0: i32 = Constant<8>
+
+    0x385d3f0: <multiple use>
+  0x385d5f0: ch = ARCISD::RET_FLAG 0x385d3f0, 0x385d4f0, 0x385d3f0:1
+
+
+Legally typed node: 0x385d4f0: i32 = Constant<8> [ID=0]
+
+Legally typed node: 0x385d2f0: i32 = Register %R0 [ID=0]
+
+Legally typed node: 0x385cff0: i32 = Register %vreg1 [ORD=1] [ID=0]
+
+Legally typed node: 0x385cdf0: i32 = Register %vreg0 [ORD=1] [ID=0]
+
+Legally typed node: 0x3833148: ch = EntryToken [ORD=1] [ID=0]
+
+Legally typed node: 0x385cef0: i32,ch = CopyFromReg 0x3833148, 0x385cdf0 [ORD=1] [ID=0]
+
+Legally typed node: 0x385d0f0: i32,ch = CopyFromReg 0x3833148, 0x385cff0 [ORD=1] [ID=0]
+
+Legally typed node: 0x385d1f0: i32 = mul 0x385d0f0, 0x385cef0 [ORD=1] [ID=0]
+
+Legally typed node: 0x385d3f0: ch,glue = CopyToReg 0x3833148, 0x385d2f0, 0x385d1f0 [ID=0]
+
+Legally typed node: 0x385d5f0: ch = ARCISD::RET_FLAG 0x385d3f0, 0x385d4f0, 0x385d3f0:1 [ID=0]
+
+Legally typed node: 0x7fffc9291160: ch = handlenode 0x385d5f0 [ID=0]
+
+Type-legalized selection DAG: BB#0 'f:'
+SelectionDAG has 10 nodes:
+  0x3833148: ch = EntryToken [ORD=1] [ID=-3]
+
+    0x3833148: <multiple use>
+    0x385d2f0: i32 = Register %R0 [ID=-3]
+
+        0x3833148: <multiple use>
+        0x385cff0: i32 = Register %vreg1 [ORD=1] [ID=-3]
+
+      0x385d0f0: i32,ch = CopyFromReg 0x3833148, 0x385cff0 [ORD=1] [ID=-3]
+
+        0x3833148: <multiple use>
+        0x385cdf0: i32 = Register %vreg0 [ORD=1] [ID=-3]
+
+      0x385cef0: i32,ch = CopyFromReg 0x3833148, 0x385cdf0 [ORD=1] [ID=-3]
+
+    0x385d1f0: i32 = mul 0x385d0f0, 0x385cef0 [ORD=1] [ID=-3]
+
+  0x385d3f0: ch,glue = CopyToReg 0x3833148, 0x385d2f0, 0x385d1f0 [ID=-3]
+
+    0x385d3f0: <multiple use>
+    0x385d4f0: i32 = Constant<8> [ID=-3]
+
+    0x385d3f0: <multiple use>
+  0x385d5f0: ch = ARCISD::RET_FLAG 0x385d3f0, 0x385d4f0, 0x385d3f0:1 [ID=-3]
+
+
+Legalized selection DAG: BB#0 'f:'
+SelectionDAG has 10 nodes:
+  0x3833148: ch = EntryToken [ORD=1] [ID=0]
+
+    0x3833148: <multiple use>
+    0x385d2f0: i32 = Register %R0 [ID=3]
+
+        0x3833148: <multiple use>
+        0x385cff0: i32 = Register %vreg1 [ORD=1] [ID=2]
+
+      0x385d0f0: i32,ch = CopyFromReg 0x3833148, 0x385cff0 [ORD=1] [ID=6]
+
+        0x3833148: <multiple use>
+        0x385cdf0: i32 = Register %vreg0 [ORD=1] [ID=1]
+
+      0x385cef0: i32,ch = CopyFromReg 0x3833148, 0x385cdf0 [ORD=1] [ID=5]
+
+    0x385d1f0: i32 = mul 0x385d0f0, 0x385cef0 [ORD=1] [ID=7]
+
+  0x385d3f0: ch,glue = CopyToReg 0x3833148, 0x385d2f0, 0x385d1f0 [ID=8]
+
+    0x385d3f0: <multiple use>
+    0x385d4f0: i32 = Constant<8> [ID=4]
+
+    0x385d3f0: <multiple use>
+  0x385d5f0: ch = ARCISD::RET_FLAG 0x385d3f0, 0x385d4f0, 0x385d3f0:1 [ID=9]
+
+
+Optimized legalized selection DAG: BB#0 'f:'
+SelectionDAG has 10 nodes:
+  0x3833148: ch = EntryToken [ORD=1] [ID=0]
+
+    0x3833148: <multiple use>
+    0x385d2f0: i32 = Register %R0 [ID=3]
+
+        0x3833148: <multiple use>
+        0x385cff0: i32 = Register %vreg1 [ORD=1] [ID=2]
+
+      0x385d0f0: i32,ch = CopyFromReg 0x3833148, 0x385cff0 [ORD=1] [ID=6]
+
+        0x3833148: <multiple use>
+        0x385cdf0: i32 = Register %vreg0 [ORD=1] [ID=1]
+
+      0x385cef0: i32,ch = CopyFromReg 0x3833148, 0x385cdf0 [ORD=1] [ID=5]
+
+    0x385d1f0: i32 = mul 0x385d0f0, 0x385cef0 [ORD=1] [ID=7]
+
+  0x385d3f0: ch,glue = CopyToReg 0x3833148, 0x385d2f0, 0x385d1f0 [ID=8]
+
+    0x385d3f0: <multiple use>
+    0x385d4f0: i32 = Constant<8> [ID=4]
+
+    0x385d3f0: <multiple use>
+  0x385d5f0: ch = ARCISD::RET_FLAG 0x385d3f0, 0x385d4f0, 0x385d3f0:1 [ID=9]
+
+
+===== Instruction selection begins: BB#0 ''
+ISEL: Starting pattern match on root node: 0x385d5f0: ch = ARCISD::RET_FLAG 0x385d3f0, 0x385d4f0, 0x385d3f0:1 [ID=9]
+
+  Morphed node: 0x385d5f0: ch = RET 0x385d3f0, 0x385d3f0:1
+
+ISEL: Match complete!
+ISEL: Starting pattern match on root node: 0x385d1f0: i32 = mul 0x385d0f0, 0x385cef0 [ORD=1] [ID=7]
+
+  Initial Opcode index to 0
+  Match failed at index 0
+LLVM ERROR: Cannot select: 0x385d1f0: i32 = mul 0x385d0f0, 0x385cef0 [ORD=1] [ID=7]
+  0x385d0f0: i32,ch = CopyFromReg 0x3833148, 0x385cff0 [ORD=1] [ID=6]
+    0x385cff0: i32 = Register %vreg1 [ORD=1] [ID=2]
+  0x385cef0: i32,ch = CopyFromReg 0x3833148, 0x385cdf0 [ORD=1] [ID=5]
+    0x385cdf0: i32 = Register %vreg0 [ORD=1] [ID=1]

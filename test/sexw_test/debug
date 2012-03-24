@@ -1,0 +1,826 @@
+Args: ../../build/Debug+Asserts/bin/llc -O3 -debug -march=arcompact -filetype=asm test.bc 
+
+Features:
+CPU:encore
+
+
+=== r
+Initial selection DAG: BB#0 'r:'
+SelectionDAG has 9 nodes:
+  0x34ec0f8: ch = EntryToken [ORD=1]
+
+    0x34ec0f8: <multiple use>
+    0x35161a0: i32 = Register %R0
+
+          0x34ec0f8: <multiple use>
+          0x3515da0: i32 = Register %vreg0 [ORD=1]
+
+        0x3515ea0: i32,ch = CopyFromReg 0x34ec0f8, 0x3515da0 [ORD=1]
+
+      0x3515fa0: i16 = truncate 0x3515ea0 [ORD=1]
+
+    0x35160a0: i32 = sign_extend 0x3515fa0 [ORD=1]
+
+  0x35162a0: ch,glue = CopyToReg 0x34ec0f8, 0x35161a0, 0x35160a0
+
+    0x35162a0: <multiple use>
+    0x35163a0: i32 = Constant<8>
+
+    0x35162a0: <multiple use>
+  0x35164a0: ch = ARCISD::RET_FLAG 0x35162a0, 0x35163a0, 0x35162a0:1
+
+
+
+Replacing.3 0x35160a0: i32 = sign_extend 0x3515fa0 [ORD=1]
+
+With: 0x35166a0: i32 = sign_extend_inreg 0x3515ea0, 0x35165a0
+
+Optimized lowered selection DAG: BB#0 'r:'
+SelectionDAG has 9 nodes:
+  0x34ec0f8: ch = EntryToken [ORD=1]
+
+    0x34ec0f8: <multiple use>
+    0x35161a0: i32 = Register %R0
+
+        0x34ec0f8: <multiple use>
+        0x3515da0: i32 = Register %vreg0 [ORD=1]
+
+      0x3515ea0: i32,ch = CopyFromReg 0x34ec0f8, 0x3515da0 [ORD=1]
+
+      0x35165a0: ch = ValueType:i16
+
+    0x35166a0: i32 = sign_extend_inreg 0x3515ea0, 0x35165a0
+
+  0x35162a0: ch,glue = CopyToReg 0x34ec0f8, 0x35161a0, 0x35166a0
+
+    0x35162a0: <multiple use>
+    0x35163a0: i32 = Constant<8>
+
+    0x35162a0: <multiple use>
+  0x35164a0: ch = ARCISD::RET_FLAG 0x35162a0, 0x35163a0, 0x35162a0:1
+
+
+Legally typed node: 0x35165a0: ch = ValueType:i16 [ID=0]
+
+Legally typed node: 0x35163a0: i32 = Constant<8> [ID=0]
+
+Legally typed node: 0x35161a0: i32 = Register %R0 [ID=0]
+
+Legally typed node: 0x3515da0: i32 = Register %vreg0 [ORD=1] [ID=0]
+
+Legally typed node: 0x34ec0f8: ch = EntryToken [ORD=1] [ID=0]
+
+Legally typed node: 0x3515ea0: i32,ch = CopyFromReg 0x34ec0f8, 0x3515da0 [ORD=1] [ID=0]
+
+Legally typed node: 0x35166a0: i32 = sign_extend_inreg 0x3515ea0, 0x35165a0 [ID=0]
+
+Legally typed node: 0x35162a0: ch,glue = CopyToReg 0x34ec0f8, 0x35161a0, 0x35166a0 [ID=0]
+
+Legally typed node: 0x35164a0: ch = ARCISD::RET_FLAG 0x35162a0, 0x35163a0, 0x35162a0:1 [ID=0]
+
+Legally typed node: 0x7fffa2a50dc0: ch = handlenode 0x35164a0 [ID=0]
+
+Type-legalized selection DAG: BB#0 'r:'
+SelectionDAG has 9 nodes:
+  0x34ec0f8: ch = EntryToken [ORD=1] [ID=-3]
+
+    0x34ec0f8: <multiple use>
+    0x35161a0: i32 = Register %R0 [ID=-3]
+
+        0x34ec0f8: <multiple use>
+        0x3515da0: i32 = Register %vreg0 [ORD=1] [ID=-3]
+
+      0x3515ea0: i32,ch = CopyFromReg 0x34ec0f8, 0x3515da0 [ORD=1] [ID=-3]
+
+      0x35165a0: ch = ValueType:i16 [ID=-3]
+
+    0x35166a0: i32 = sign_extend_inreg 0x3515ea0, 0x35165a0 [ID=-3]
+
+  0x35162a0: ch,glue = CopyToReg 0x34ec0f8, 0x35161a0, 0x35166a0 [ID=-3]
+
+    0x35162a0: <multiple use>
+    0x35163a0: i32 = Constant<8> [ID=-3]
+
+    0x35162a0: <multiple use>
+  0x35164a0: ch = ARCISD::RET_FLAG 0x35162a0, 0x35163a0, 0x35162a0:1 [ID=-3]
+
+
+Legalized selection DAG: BB#0 'r:'
+SelectionDAG has 9 nodes:
+  0x34ec0f8: ch = EntryToken [ORD=1] [ID=0]
+
+    0x34ec0f8: <multiple use>
+    0x35161a0: i32 = Register %R0 [ID=2]
+
+        0x34ec0f8: <multiple use>
+        0x3515da0: i32 = Register %vreg0 [ORD=1] [ID=1]
+
+      0x3515ea0: i32,ch = CopyFromReg 0x34ec0f8, 0x3515da0 [ORD=1] [ID=5]
+
+      0x35165a0: ch = ValueType:i16 [ID=4]
+
+    0x35166a0: i32 = sign_extend_inreg 0x3515ea0, 0x35165a0 [ID=6]
+
+  0x35162a0: ch,glue = CopyToReg 0x34ec0f8, 0x35161a0, 0x35166a0 [ID=7]
+
+    0x35162a0: <multiple use>
+    0x35163a0: i32 = Constant<8> [ID=3]
+
+    0x35162a0: <multiple use>
+  0x35164a0: ch = ARCISD::RET_FLAG 0x35162a0, 0x35163a0, 0x35162a0:1 [ID=8]
+
+
+Optimized legalized selection DAG: BB#0 'r:'
+SelectionDAG has 9 nodes:
+  0x34ec0f8: ch = EntryToken [ORD=1] [ID=0]
+
+    0x34ec0f8: <multiple use>
+    0x35161a0: i32 = Register %R0 [ID=2]
+
+        0x34ec0f8: <multiple use>
+        0x3515da0: i32 = Register %vreg0 [ORD=1] [ID=1]
+
+      0x3515ea0: i32,ch = CopyFromReg 0x34ec0f8, 0x3515da0 [ORD=1] [ID=5]
+
+      0x35165a0: ch = ValueType:i16 [ID=4]
+
+    0x35166a0: i32 = sign_extend_inreg 0x3515ea0, 0x35165a0 [ID=6]
+
+  0x35162a0: ch,glue = CopyToReg 0x34ec0f8, 0x35161a0, 0x35166a0 [ID=7]
+
+    0x35162a0: <multiple use>
+    0x35163a0: i32 = Constant<8> [ID=3]
+
+    0x35162a0: <multiple use>
+  0x35164a0: ch = ARCISD::RET_FLAG 0x35162a0, 0x35163a0, 0x35162a0:1 [ID=8]
+
+
+===== Instruction selection begins: BB#0 ''
+ISEL: Starting pattern match on root node: 0x35164a0: ch = ARCISD::RET_FLAG 0x35162a0, 0x35163a0, 0x35162a0:1 [ID=8]
+
+  Morphed node: 0x35164a0: ch = RET 0x35162a0, 0x35162a0:1
+
+ISEL: Match complete!
+ISEL: Starting pattern match on root node: 0x35166a0: i32 = sign_extend_inreg 0x3515ea0, 0x35165a0 [ID=6]
+
+  Initial Opcode index to 5232
+  Match failed at index 5237
+  Continuing at 5318
+  Skipped scope entry (due to false predicate) at index 5323, continuing at 5334
+  Morphed node: 0x35166a0: i32 = SEXWr 0x3515ea0
+
+ISEL: Match complete!
+===== Instruction selection ends:
+Selected selection DAG: BB#0 'r:'
+SelectionDAG has 7 nodes:
+  0x34ec0f8: ch = EntryToken [ORD=1]
+
+    0x34ec0f8: <multiple use>
+    0x35161a0: i32 = Register %R0
+
+        0x34ec0f8: <multiple use>
+        0x3515da0: i32 = Register %vreg0 [ORD=1]
+
+      0x3515ea0: i32,ch = CopyFromReg 0x34ec0f8, 0x3515da0 [ORD=1]
+
+    0x35166a0: i32 = SEXWr 0x3515ea0
+
+  0x35162a0: ch,glue = CopyToReg 0x34ec0f8, 0x35161a0, 0x35166a0
+
+    0x35162a0: <multiple use>
+    0x35162a0: <multiple use>
+  0x35164a0: ch = RET 0x35162a0, 0x35162a0:1
+
+
+********** List Scheduling **********
+*** Scheduling [0]: SU(2): 0x3515ea0: i32,ch = CopyFromReg 0x34ec0f8, 0x3515da0 [ORD=1] [ID=2]
+
+*** Scheduling [1]: SU(1): 0x35166a0: i32 = SEXWr 0x3515ea0 [ID=1]
+
+*** Scheduling [2]: SU(0): 0x35164a0: ch = RET 0x35162a0, 0x35162a0:1 [ID=0]
+
+    0x35162a0: ch,glue = CopyToReg 0x34ec0f8, 0x35161a0, 0x35166a0 [ID=0]
+
+*** Final schedule ***
+SU(2): 0x3515ea0: i32,ch = CopyFromReg 0x34ec0f8, 0x3515da0 [ORD=1] [ID=2]
+
+SU(1): 0x35166a0: i32 = SEXWr 0x3515ea0 [ID=1]
+
+SU(0): 0x35164a0: ch = RET 0x35162a0, 0x35162a0:1 [ID=0]
+
+    0x35162a0: ch,glue = CopyToReg 0x34ec0f8, 0x35161a0, 0x35166a0 [ID=0]
+
+
+Total amount of phi nodes to update: 0
+******** Pre-regalloc Machine LICM: r ********
+Entering: 
+Exiting: 
+******** Machine Sinking ********
+Machine Function
+********** REWRITING TWO-ADDR INSTRS **********
+********** Function: r
+********** PROCESS IMPLICIT DEFS **********
+********** Function: r
+0 
+16 %vreg0<def> = COPY %R0<kill>; CPURegs:%vreg0
+32 %vreg1<def> = SEXWr %vreg0<kill>; CPURegs:%vreg1,%vreg0
+48 %R0<def> = COPY %vreg1<kill>; CPURegs:%vreg1
+64 RET %R0<imp-use,kill>
+80 
+BB#0	[0L;80L)
+********** COMPUTING LIVE INTERVALS **********
+********** Function: r
+BB#0:		# derived from 
+		livein register: %R0 killed +[0L,16d:0)
+16L	%vreg0<def> = COPY %R0<kill>; CPURegs:%vreg0
+		register: %vreg0 +[16d,32d:0)
+32L	%vreg1<def> = SEXWr %vreg0<kill>; CPURegs:%vreg1,%vreg0
+		register: %vreg1 +[32d,48d:0)
+48L	%R0<def> = COPY %vreg1<kill>; CPURegs:%vreg1
+		register: %R0 killed +[48d,64d:1)
+64L	RET %R0<imp-use,kill>
+********** INTERVALS **********
+%vreg0 = [16d,32d:0)  0@16d
+%R0,inf = [0L,16d:0)[48d,64d:1)  0@0L-phidef 1@48d
+%vreg1 = [32d,48d:0)  0@32d
+********** MACHINEINSTRS **********
+# Machine code for function r:
+Function Live Ins: %R0 in %vreg0
+Function Live Outs: %R0
+
+0L	BB#0: derived from LLVM BB %0
+	    Live Ins: %R0
+16L		%vreg0<def> = COPY %R0<kill>; CPURegs:%vreg0
+32L		%vreg1<def> = SEXWr %vreg0<kill>; CPURegs:%vreg1,%vreg0
+48L		%R0<def> = COPY %vreg1<kill>; CPURegs:%vreg1
+64L		RET %R0<imp-use,kill>
+
+# End machine code for function r.
+
+********** COMPUTING LIVE DEBUG VARIABLES: r **********
+********** DEBUG VARIABLES **********
+********** SIMPLE REGISTER COALESCING **********
+********** Function: r
+********** JOINING INTERVALS ***********
+:
+16L	%vreg0<def> = COPY %R0<kill>; CPURegs:%vreg0
+	Considering merging %vreg0 with %R0
+	Physreg joins disabled.
+48L	%R0<def> = COPY %vreg1<kill>; CPURegs:%vreg1
+	Considering merging %vreg1 with %R0
+	Physreg joins disabled.
+********** INTERVALS POST JOINING **********
+%vreg0 = [16d,32d:0)  0@16d
+%R0,inf = [0L,16d:0)[48d,64d:1)  0@0L-phidef 1@48d
+%vreg1 = [32d,48d:0)  0@32d
+Trying to inflate 0 regs.
+********** INTERVALS **********
+%vreg0 = [16d,32d:0)  0@16d
+%R0,inf = [0L,16d:0)[48d,64d:1)  0@0L-phidef 1@48d
+%vreg1 = [32d,48d:0)  0@32d
+********** MACHINEINSTRS **********
+# Machine code for function r:
+Function Live Ins: %R0 in %vreg0
+Function Live Outs: %R0
+
+0L	BB#0: derived from LLVM BB %0
+	    Live Ins: %R0
+16L		%vreg0<def> = COPY %R0<kill>; CPURegs:%vreg0
+32L		%vreg1<def> = SEXWr %vreg0<kill>; CPURegs:%vreg1,%vreg0
+48L		%R0<def> = COPY %vreg1<kill>; CPURegs:%vreg1
+64L		RET %R0<imp-use,kill>
+
+# End machine code for function r.
+
+********** DEBUG VARIABLES **********
+********** Compute Spill Weights **********
+********** Function: r
+********** GREEDY REGISTER ALLOCATION **********
+********** Function: r
+
+selectOrSplit CPURegs:%vreg1,inf = [32d,48d:0)  0@32d
+AllocationOrder(CPURegs) = [ %R0 %R1 %R2 %R3 %R4 %R5 %R6 %R7 %T0 %T1 %T2 %T3 %T4 %T5 %T6 %T7 %S0 %S1 %S2 %S3 %S4 %S5 %S6 %S7 %S8 %S9 ]
+assigning %vreg1 to %R0
+
+selectOrSplit CPURegs:%vreg0,inf = [16d,32d:0)  0@16d
+assigning %vreg0 to %R0
+********** REWRITE VIRTUAL REGISTERS **********
+********** Function: r
+********** REGISTER MAP **********
+[%vreg0 -> %R0] CPURegs
+[%vreg1 -> %R0] CPURegs
+
+0L	BB#0: derived from LLVM BB %0
+	    Live Ins: %R0
+16L		%vreg0<def> = COPY %R0<kill>; CPURegs:%vreg0
+32L		%vreg1<def> = SEXWr %vreg0<kill>; CPURegs:%vreg1,%vreg0
+48L		%R0<def> = COPY %vreg1<kill>; CPURegs:%vreg1
+64L		RET %R0<imp-use,kill>
+> %R0<def> = COPY %R0<kill>
+Deleting identity copy.
+> %R0<def> = SEXWr %R0<kill>
+> %R0<def> = COPY %R0<kill>
+Deleting identity copy.
+> RET %R0<imp-use,kill>
+********** EMITTING LIVE DEBUG VARIABLES **********
+********** Stack Slot Coloring **********
+********** Function: r
+******** Post-regalloc Machine LICM: r ********
+Machine Function
+********** EXPANDING POST-RA PSEUDO INSTRS **********
+********** Function: r
+
+Ifcvt: function (0) 'r'
+
+
+
+=== ui
+Initial selection DAG: BB#0 'ui:'
+SelectionDAG has 7 nodes:
+  0x35164a0: i16 = Constant<4>
+
+    0x34ec0f8: ch = EntryToken
+
+    0x35166a0: i32 = Register %R0
+
+    0x35162a0: i32 = Constant<4> [ORD=2]
+
+  0x3515ea0: ch,glue = CopyToReg 0x34ec0f8, 0x35166a0, 0x35162a0
+
+    0x3515ea0: <multiple use>
+    0x35161a0: i32 = Constant<8>
+
+    0x3515ea0: <multiple use>
+  0x3515da0: ch = ARCISD::RET_FLAG 0x3515ea0, 0x35161a0, 0x3515ea0:1
+
+
+Optimized lowered selection DAG: BB#0 'ui:'
+SelectionDAG has 6 nodes:
+    0x34ec0f8: ch = EntryToken
+
+    0x35166a0: i32 = Register %R0
+
+    0x35162a0: i32 = Constant<4> [ORD=2]
+
+  0x3515ea0: ch,glue = CopyToReg 0x34ec0f8, 0x35166a0, 0x35162a0
+
+    0x3515ea0: <multiple use>
+    0x35161a0: i32 = Constant<8>
+
+    0x3515ea0: <multiple use>
+  0x3515da0: ch = ARCISD::RET_FLAG 0x3515ea0, 0x35161a0, 0x3515ea0:1
+
+
+Legally typed node: 0x35161a0: i32 = Constant<8> [ID=0]
+
+Legally typed node: 0x35166a0: i32 = Register %R0 [ID=0]
+
+Legally typed node: 0x35162a0: i32 = Constant<4> [ORD=2] [ID=0]
+
+Legally typed node: 0x34ec0f8: ch = EntryToken [ID=0]
+
+Legally typed node: 0x3515ea0: ch,glue = CopyToReg 0x34ec0f8, 0x35166a0, 0x35162a0 [ID=0]
+
+Legally typed node: 0x3515da0: ch = ARCISD::RET_FLAG 0x3515ea0, 0x35161a0, 0x3515ea0:1 [ID=0]
+
+Legally typed node: 0x7fffa2a50dc0: ch = handlenode 0x3515da0 [ID=0]
+
+Type-legalized selection DAG: BB#0 'ui:'
+SelectionDAG has 6 nodes:
+    0x34ec0f8: ch = EntryToken [ID=-3]
+
+    0x35166a0: i32 = Register %R0 [ID=-3]
+
+    0x35162a0: i32 = Constant<4> [ORD=2] [ID=-3]
+
+  0x3515ea0: ch,glue = CopyToReg 0x34ec0f8, 0x35166a0, 0x35162a0 [ID=-3]
+
+    0x3515ea0: <multiple use>
+    0x35161a0: i32 = Constant<8> [ID=-3]
+
+    0x3515ea0: <multiple use>
+  0x3515da0: ch = ARCISD::RET_FLAG 0x3515ea0, 0x35161a0, 0x3515ea0:1 [ID=-3]
+
+
+Legalized selection DAG: BB#0 'ui:'
+SelectionDAG has 6 nodes:
+    0x34ec0f8: ch = EntryToken [ID=0]
+
+    0x35166a0: i32 = Register %R0 [ID=2]
+
+    0x35162a0: i32 = Constant<4> [ORD=2] [ID=1]
+
+  0x3515ea0: ch,glue = CopyToReg 0x34ec0f8, 0x35166a0, 0x35162a0 [ID=4]
+
+    0x3515ea0: <multiple use>
+    0x35161a0: i32 = Constant<8> [ID=3]
+
+    0x3515ea0: <multiple use>
+  0x3515da0: ch = ARCISD::RET_FLAG 0x3515ea0, 0x35161a0, 0x3515ea0:1 [ID=5]
+
+
+Optimized legalized selection DAG: BB#0 'ui:'
+SelectionDAG has 6 nodes:
+    0x34ec0f8: ch = EntryToken [ID=0]
+
+    0x35166a0: i32 = Register %R0 [ID=2]
+
+    0x35162a0: i32 = Constant<4> [ORD=2] [ID=1]
+
+  0x3515ea0: ch,glue = CopyToReg 0x34ec0f8, 0x35166a0, 0x35162a0 [ID=4]
+
+    0x3515ea0: <multiple use>
+    0x35161a0: i32 = Constant<8> [ID=3]
+
+    0x3515ea0: <multiple use>
+  0x3515da0: ch = ARCISD::RET_FLAG 0x3515ea0, 0x35161a0, 0x3515ea0:1 [ID=5]
+
+
+===== Instruction selection begins: BB#0 ''
+ISEL: Starting pattern match on root node: 0x3515da0: ch = ARCISD::RET_FLAG 0x3515ea0, 0x35161a0, 0x3515ea0:1 [ID=5]
+
+  Initial Opcode index to 5545
+  Morphed node: 0x3515da0: ch = RET 0x3515ea0, 0x3515ea0:1
+
+ISEL: Match complete!
+ISEL: Starting pattern match on root node: 0x35162a0: i32 = Constant<4> [ORD=2] [ID=1]
+
+  Initial Opcode index to 5500
+  Morphed node: 0x35162a0: i32 = MOVrui 0x35161a0 [ORD=2]
+
+ISEL: Match complete!
+===== Instruction selection ends:
+Selected selection DAG: BB#0 'ui:'
+SelectionDAG has 6 nodes:
+    0x34ec0f8: ch = EntryToken
+
+    0x35166a0: i32 = Register %R0
+
+      0x35161a0: i32 = TargetConstant<4>
+
+    0x35162a0: i32 = MOVrui 0x35161a0 [ORD=2]
+
+  0x3515ea0: ch,glue = CopyToReg 0x34ec0f8, 0x35166a0, 0x35162a0
+
+    0x3515ea0: <multiple use>
+    0x3515ea0: <multiple use>
+  0x3515da0: ch = RET 0x3515ea0, 0x3515ea0:1
+
+
+********** List Scheduling **********
+*** Scheduling [0]: SU(1): 0x35162a0: i32 = MOVrui 0x35161a0 [ORD=2] [ID=1]
+
+*** Scheduling [1]: SU(0): 0x3515da0: ch = RET 0x3515ea0, 0x3515ea0:1 [ID=0]
+
+    0x3515ea0: ch,glue = CopyToReg 0x34ec0f8, 0x35166a0, 0x35162a0 [ID=0]
+
+*** Final schedule ***
+SU(1): 0x35162a0: i32 = MOVrui 0x35161a0 [ORD=2] [ID=1]
+
+SU(0): 0x3515da0: ch = RET 0x3515ea0, 0x3515ea0:1 [ID=0]
+
+    0x3515ea0: ch,glue = CopyToReg 0x34ec0f8, 0x35166a0, 0x35162a0 [ID=0]
+
+
+Total amount of phi nodes to update: 0
+******** Pre-regalloc Machine LICM: ui ********
+Entering: 
+Exiting: 
+******** Machine Sinking ********
+Machine Function
+********** REWRITING TWO-ADDR INSTRS **********
+********** Function: ui
+********** PROCESS IMPLICIT DEFS **********
+********** Function: ui
+0 
+16 %vreg0<def> = MOVrui 4; CPURegs:%vreg0
+32 %R0<def> = COPY %vreg0<kill>; CPURegs:%vreg0
+48 RET %R0<imp-use,kill>
+64 
+BB#0	[0L;64L)
+********** COMPUTING LIVE INTERVALS **********
+********** Function: ui
+BB#0:		# derived from 
+16L	%vreg0<def> = MOVrui 4; CPURegs:%vreg0
+		register: %vreg0 +[16d,32d:0)
+32L	%R0<def> = COPY %vreg0<kill>; CPURegs:%vreg0
+		register: %R0 killed +[32d,48d:0)
+48L	RET %R0<imp-use,kill>
+********** INTERVALS **********
+%vreg0 = [16d,32d:0)  0@16d
+%R0,inf = [32d,48d:0)  0@32d
+********** MACHINEINSTRS **********
+# Machine code for function ui:
+Function Live Outs: %R0
+
+0L	BB#0: derived from LLVM BB %0
+16L		%vreg0<def> = MOVrui 4; CPURegs:%vreg0
+32L		%R0<def> = COPY %vreg0<kill>; CPURegs:%vreg0
+48L		RET %R0<imp-use,kill>
+
+# End machine code for function ui.
+
+********** COMPUTING LIVE DEBUG VARIABLES: ui **********
+********** DEBUG VARIABLES **********
+********** SIMPLE REGISTER COALESCING **********
+********** Function: ui
+********** JOINING INTERVALS ***********
+:
+32L	%R0<def> = COPY %vreg0<kill>; CPURegs:%vreg0
+	Considering merging %vreg0 with %R0
+	Physreg joins disabled.
+********** INTERVALS POST JOINING **********
+%vreg0 = [16d,32d:0)  0@16d
+%R0,inf = [32d,48d:0)  0@32d
+Trying to inflate 0 regs.
+********** INTERVALS **********
+%vreg0 = [16d,32d:0)  0@16d
+%R0,inf = [32d,48d:0)  0@32d
+********** MACHINEINSTRS **********
+# Machine code for function ui:
+Function Live Outs: %R0
+
+0L	BB#0: derived from LLVM BB %0
+16L		%vreg0<def> = MOVrui 4; CPURegs:%vreg0
+32L		%R0<def> = COPY %vreg0<kill>; CPURegs:%vreg0
+48L		RET %R0<imp-use,kill>
+
+# End machine code for function ui.
+
+********** DEBUG VARIABLES **********
+********** Compute Spill Weights **********
+********** Function: ui
+********** GREEDY REGISTER ALLOCATION **********
+********** Function: ui
+
+selectOrSplit CPURegs:%vreg0,inf = [16d,32d:0)  0@16d
+assigning %vreg0 to %R0
+********** REWRITE VIRTUAL REGISTERS **********
+********** Function: ui
+********** REGISTER MAP **********
+[%vreg0 -> %R0] CPURegs
+
+0L	BB#0: derived from LLVM BB %0
+16L		%vreg0<def> = MOVrui 4; CPURegs:%vreg0
+32L		%R0<def> = COPY %vreg0<kill>; CPURegs:%vreg0
+48L		RET %R0<imp-use,kill>
+> %R0<def> = MOVrui 4
+> %R0<def> = COPY %R0<kill>
+Deleting identity copy.
+> RET %R0<imp-use,kill>
+********** EMITTING LIVE DEBUG VARIABLES **********
+********** Stack Slot Coloring **********
+********** Function: ui
+******** Post-regalloc Machine LICM: ui ********
+Machine Function
+********** EXPANDING POST-RA PSEUDO INSTRS **********
+********** Function: ui
+
+Ifcvt: function (1) 'ui'
+
+
+
+=== li
+Initial selection DAG: BB#0 'li:'
+SelectionDAG has 7 nodes:
+  0x35161a0: i16 = Constant<127>
+
+    0x34ec0f8: ch = EntryToken
+
+    0x3515ea0: i32 = Register %R0
+
+    0x3515da0: i32 = Constant<127> [ORD=3]
+
+  0x35166a0: ch,glue = CopyToReg 0x34ec0f8, 0x3515ea0, 0x3515da0
+
+    0x35166a0: <multiple use>
+    0x35162a0: i32 = Constant<8>
+
+    0x35166a0: <multiple use>
+  0x35164a0: ch = ARCISD::RET_FLAG 0x35166a0, 0x35162a0, 0x35166a0:1
+
+
+Optimized lowered selection DAG: BB#0 'li:'
+SelectionDAG has 6 nodes:
+    0x34ec0f8: ch = EntryToken
+
+    0x3515ea0: i32 = Register %R0
+
+    0x3515da0: i32 = Constant<127> [ORD=3]
+
+  0x35166a0: ch,glue = CopyToReg 0x34ec0f8, 0x3515ea0, 0x3515da0
+
+    0x35166a0: <multiple use>
+    0x35162a0: i32 = Constant<8>
+
+    0x35166a0: <multiple use>
+  0x35164a0: ch = ARCISD::RET_FLAG 0x35166a0, 0x35162a0, 0x35166a0:1
+
+
+Legally typed node: 0x35162a0: i32 = Constant<8> [ID=0]
+
+Legally typed node: 0x3515ea0: i32 = Register %R0 [ID=0]
+
+Legally typed node: 0x3515da0: i32 = Constant<127> [ORD=3] [ID=0]
+
+Legally typed node: 0x34ec0f8: ch = EntryToken [ID=0]
+
+Legally typed node: 0x35166a0: ch,glue = CopyToReg 0x34ec0f8, 0x3515ea0, 0x3515da0 [ID=0]
+
+Legally typed node: 0x35164a0: ch = ARCISD::RET_FLAG 0x35166a0, 0x35162a0, 0x35166a0:1 [ID=0]
+
+Legally typed node: 0x7fffa2a50dc0: ch = handlenode 0x35164a0 [ID=0]
+
+Type-legalized selection DAG: BB#0 'li:'
+SelectionDAG has 6 nodes:
+    0x34ec0f8: ch = EntryToken [ID=-3]
+
+    0x3515ea0: i32 = Register %R0 [ID=-3]
+
+    0x3515da0: i32 = Constant<127> [ORD=3] [ID=-3]
+
+  0x35166a0: ch,glue = CopyToReg 0x34ec0f8, 0x3515ea0, 0x3515da0 [ID=-3]
+
+    0x35166a0: <multiple use>
+    0x35162a0: i32 = Constant<8> [ID=-3]
+
+    0x35166a0: <multiple use>
+  0x35164a0: ch = ARCISD::RET_FLAG 0x35166a0, 0x35162a0, 0x35166a0:1 [ID=-3]
+
+
+Legalized selection DAG: BB#0 'li:'
+SelectionDAG has 6 nodes:
+    0x34ec0f8: ch = EntryToken [ID=0]
+
+    0x3515ea0: i32 = Register %R0 [ID=2]
+
+    0x3515da0: i32 = Constant<127> [ORD=3] [ID=1]
+
+  0x35166a0: ch,glue = CopyToReg 0x34ec0f8, 0x3515ea0, 0x3515da0 [ID=4]
+
+    0x35166a0: <multiple use>
+    0x35162a0: i32 = Constant<8> [ID=3]
+
+    0x35166a0: <multiple use>
+  0x35164a0: ch = ARCISD::RET_FLAG 0x35166a0, 0x35162a0, 0x35166a0:1 [ID=5]
+
+
+Optimized legalized selection DAG: BB#0 'li:'
+SelectionDAG has 6 nodes:
+    0x34ec0f8: ch = EntryToken [ID=0]
+
+    0x3515ea0: i32 = Register %R0 [ID=2]
+
+    0x3515da0: i32 = Constant<127> [ORD=3] [ID=1]
+
+  0x35166a0: ch,glue = CopyToReg 0x34ec0f8, 0x3515ea0, 0x3515da0 [ID=4]
+
+    0x35166a0: <multiple use>
+    0x35162a0: i32 = Constant<8> [ID=3]
+
+    0x35166a0: <multiple use>
+  0x35164a0: ch = ARCISD::RET_FLAG 0x35166a0, 0x35162a0, 0x35166a0:1 [ID=5]
+
+
+===== Instruction selection begins: BB#0 ''
+ISEL: Starting pattern match on root node: 0x35164a0: ch = ARCISD::RET_FLAG 0x35166a0, 0x35162a0, 0x35166a0:1 [ID=5]
+
+  Initial Opcode index to 5545
+  Morphed node: 0x35164a0: ch = RET 0x35166a0, 0x35166a0:1
+
+ISEL: Match complete!
+ISEL: Starting pattern match on root node: 0x3515da0: i32 = Constant<127> [ORD=3] [ID=1]
+
+  Initial Opcode index to 5500
+  Skipped scope entry (due to false predicate) at index 5503, continuing at 5515
+  Morphed node: 0x3515da0: i32 = MOVrsi 0x35162a0 [ORD=3]
+
+ISEL: Match complete!
+===== Instruction selection ends:
+Selected selection DAG: BB#0 'li:'
+SelectionDAG has 6 nodes:
+    0x34ec0f8: ch = EntryToken
+
+    0x3515ea0: i32 = Register %R0
+
+      0x35162a0: i32 = TargetConstant<127>
+
+    0x3515da0: i32 = MOVrsi 0x35162a0 [ORD=3]
+
+  0x35166a0: ch,glue = CopyToReg 0x34ec0f8, 0x3515ea0, 0x3515da0
+
+    0x35166a0: <multiple use>
+    0x35166a0: <multiple use>
+  0x35164a0: ch = RET 0x35166a0, 0x35166a0:1
+
+
+********** List Scheduling **********
+*** Scheduling [0]: SU(1): 0x3515da0: i32 = MOVrsi 0x35162a0 [ORD=3] [ID=1]
+
+*** Scheduling [1]: SU(0): 0x35164a0: ch = RET 0x35166a0, 0x35166a0:1 [ID=0]
+
+    0x35166a0: ch,glue = CopyToReg 0x34ec0f8, 0x3515ea0, 0x3515da0 [ID=0]
+
+*** Final schedule ***
+SU(1): 0x3515da0: i32 = MOVrsi 0x35162a0 [ORD=3] [ID=1]
+
+SU(0): 0x35164a0: ch = RET 0x35166a0, 0x35166a0:1 [ID=0]
+
+    0x35166a0: ch,glue = CopyToReg 0x34ec0f8, 0x3515ea0, 0x3515da0 [ID=0]
+
+
+Total amount of phi nodes to update: 0
+******** Pre-regalloc Machine LICM: li ********
+Entering: 
+Exiting: 
+******** Machine Sinking ********
+Machine Function
+********** REWRITING TWO-ADDR INSTRS **********
+********** Function: li
+********** PROCESS IMPLICIT DEFS **********
+********** Function: li
+0 
+16 %vreg0<def> = MOVrsi 127; CPURegs:%vreg0
+32 %R0<def> = COPY %vreg0<kill>; CPURegs:%vreg0
+48 RET %R0<imp-use,kill>
+64 
+BB#0	[0L;64L)
+********** COMPUTING LIVE INTERVALS **********
+********** Function: li
+BB#0:		# derived from 
+16L	%vreg0<def> = MOVrsi 127; CPURegs:%vreg0
+		register: %vreg0 +[16d,32d:0)
+32L	%R0<def> = COPY %vreg0<kill>; CPURegs:%vreg0
+		register: %R0 killed +[32d,48d:0)
+48L	RET %R0<imp-use,kill>
+********** INTERVALS **********
+%vreg0 = [16d,32d:0)  0@16d
+%R0,inf = [32d,48d:0)  0@32d
+********** MACHINEINSTRS **********
+# Machine code for function li:
+Function Live Outs: %R0
+
+0L	BB#0: derived from LLVM BB %0
+16L		%vreg0<def> = MOVrsi 127; CPURegs:%vreg0
+32L		%R0<def> = COPY %vreg0<kill>; CPURegs:%vreg0
+48L		RET %R0<imp-use,kill>
+
+# End machine code for function li.
+
+********** COMPUTING LIVE DEBUG VARIABLES: li **********
+********** DEBUG VARIABLES **********
+********** SIMPLE REGISTER COALESCING **********
+********** Function: li
+********** JOINING INTERVALS ***********
+:
+32L	%R0<def> = COPY %vreg0<kill>; CPURegs:%vreg0
+	Considering merging %vreg0 with %R0
+	Physreg joins disabled.
+********** INTERVALS POST JOINING **********
+%vreg0 = [16d,32d:0)  0@16d
+%R0,inf = [32d,48d:0)  0@32d
+Trying to inflate 0 regs.
+********** INTERVALS **********
+%vreg0 = [16d,32d:0)  0@16d
+%R0,inf = [32d,48d:0)  0@32d
+********** MACHINEINSTRS **********
+# Machine code for function li:
+Function Live Outs: %R0
+
+0L	BB#0: derived from LLVM BB %0
+16L		%vreg0<def> = MOVrsi 127; CPURegs:%vreg0
+32L		%R0<def> = COPY %vreg0<kill>; CPURegs:%vreg0
+48L		RET %R0<imp-use,kill>
+
+# End machine code for function li.
+
+********** DEBUG VARIABLES **********
+********** Compute Spill Weights **********
+********** Function: li
+********** GREEDY REGISTER ALLOCATION **********
+********** Function: li
+
+selectOrSplit CPURegs:%vreg0,inf = [16d,32d:0)  0@16d
+assigning %vreg0 to %R0
+********** REWRITE VIRTUAL REGISTERS **********
+********** Function: li
+********** REGISTER MAP **********
+[%vreg0 -> %R0] CPURegs
+
+0L	BB#0: derived from LLVM BB %0
+16L		%vreg0<def> = MOVrsi 127; CPURegs:%vreg0
+32L		%R0<def> = COPY %vreg0<kill>; CPURegs:%vreg0
+48L		RET %R0<imp-use,kill>
+> %R0<def> = MOVrsi 127
+> %R0<def> = COPY %R0<kill>
+Deleting identity copy.
+> RET %R0<imp-use,kill>
+********** EMITTING LIVE DEBUG VARIABLES **********
+********** Stack Slot Coloring **********
+********** Function: li
+******** Post-regalloc Machine LICM: li ********
+Machine Function
+********** EXPANDING POST-RA PSEUDO INSTRS **********
+********** Function: li
+
+Ifcvt: function (2) 'li'
