@@ -2447,6 +2447,9 @@ void gcc::Common::ConstructJob(Compilation &C, const JobAction &JA,
 
   const char *Exec = "/afs/inf.ed.ac.uk/group/project/arc_tools/arc_gcc_2.3/arc-elf32/bin/arc-elf32-gcc";
   CmdArgs.push_back("-mARC700");
+  CmdArgs.push_back("-v");
+  CmdArgs.push_back("-x none");
+  CmdArgs.push_back("/afs/inf.ed.ac.uk/user/s08/s0840449/Documents/Coursework/Project/LLVM-ARCompact/arclibs/libgcc_extra.a");
   //  Args.MakeArgString(getToolChain().GetProgramPath(GCCName));
   C.addCommand(new Command(JA, *this, Exec, CmdArgs));
 }
