@@ -2,6 +2,10 @@ Uses LLVM 3.0.
 
 Notes:
 
+To build
+
+  ../configure --enable-assertions --disable-optimized
+
 To compile with clang --> bitcode
 
   Clang/bin/clang -emit-llvm test.c -c -o test.bc
