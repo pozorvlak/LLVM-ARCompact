@@ -180,8 +180,8 @@ void ARCompactFrameLowering::emitEpilogue(MachineFunction &MF,
 
   // Restore the return address register, if needed.
   if (MFI->adjustsStack()) {
-    BuildMI(MBB, MBBI, dl, TII.get(ARC::LDri_ab)).addReg(ARC::SP)
-        .addReg(ARC::BLINK).addImm(UNITS_PER_WORD);
+    BuildMI(MBB, MBBI, dl, TII.get(ARC::LDri_ab)).addReg(ARC::BLINK)
+        .addReg(ARC::SP).addImm(UNITS_PER_WORD);
   }
 
   // End of epilogue comment.
