@@ -432,7 +432,8 @@ let isCall = 1 in {
   // All calls clobber the non-callee saved registers. SP is marked as
   // a use to prevent stack-pointer assignments that appear immediately
   // before calls from potentially appearing dead.
-  let Defs = [STATUS32], Uses = [SP] in {
+  let Defs = [R0, R1, R2, R3, R4, R5, R6, R7, T0, T1, T2, T3, T4, STATUS32],
+      Uses = [SP] in {
     // Unconditional jump.
     // TODO: Are both versions (i32imm and CPURegs) needed? Why?
     def BLi : Pseudo<(outs), (ins i32imm:$dst, variable_ops),
