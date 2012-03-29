@@ -4,7 +4,7 @@ mkdir llvm_benchmarks
 cd llvm_benchmarks
 
 # Run configure.
-../configure --with-dspstone --with-cc="/afs/inf.ed.ac.uk/user/s08/s0840449/Documents/Coursework/Project/LLVM-ARCompact/build/Release+Asserts/bin/clang -v -debug -O3 -ccc-host-triple arcompact-generic-generic -I/afs/inf.ed.ac.uk/group/project/arc_tools/arc_gcc_2.3/arc-elf32/arc-elf32/include -I/afs/inf.ed.ac.uk/group/project/arc_tools/arc_gcc_2.3/arc-elf32/lib/gcc/arc-elf32/4.2.1/include -I/afs/inf.ed.ac.uk/user/s08/s0840449/Documents/Coursework/Project/LLVM-ARCompact/arclibs/libgcc_extra.a" --with-collect="../collect.sh" --with-sim="/afs/inf.ed.ac.uk/group/project/arc_tools/arcsim/bin/arcsim -tcvX --emt"
+../configure --with-dspstone --with-cc="/afs/inf.ed.ac.uk/user/s08/s0840449/Documents/Coursework/Project/LLVM-ARCompact/build/Release+Asserts/bin/clang -O3 -v -debug -ccc-host-triple arcompact-generic-generic -I/afs/inf.ed.ac.uk/group/project/arc_tools/arc_gcc_2.3/arc-elf32/arc-elf32/include -I/afs/inf.ed.ac.uk/group/project/arc_tools/arc_gcc_2.3/arc-elf32/lib/gcc/arc-elf32/4.2.1/include -I/afs/inf.ed.ac.uk/user/s08/s0840449/Documents/Coursework/Project/LLVM-ARCompact/arclibs/libgcc_extra.a" --with-collect="../collect.sh" --with-sim="/afs/inf.ed.ac.uk/group/project/arc_tools/arcsim/bin/arcsim-bleeding --arch /afs/inf.ed.ac.uk/group/project/arc_tools/arcsim/svn/etc/encore-bleeding.arc --isa /afs/inf.ed.ac.uk/group/project/arc_tools/arcsim/svn/etc/encore.isa -tcvX --emt"
 
 # Build the benchmarks
 echo "Building..."

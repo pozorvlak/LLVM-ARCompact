@@ -4,7 +4,7 @@ mkdir gcc_benchmarks
 cd gcc_benchmarks
 
 # Run configure.
-../configure --with-dspstone --with-cc="/afs/inf.ed.ac.uk/group/project/arc_tools/arc_gcc_2.3/arc-elf32/bin/arc-elf32-gcc -O3 -mARC700 -v" --with-collect="../collect.sh" --with-sim="/afs/inf.ed.ac.uk/group/project/arc_tools/arcsim/bin/arcsim -tcvX --emt"
+../configure --with-dspstone --with-cc="/afs/inf.ed.ac.uk/group/project/arc_tools/arc_gcc_2.3/arc-elf32/bin/arc-elf32-gcc -O3 -mARC700 -v" --with-collect="../collect.sh" --with-sim="/afs/inf.ed.ac.uk/group/project/arc_tools/arcsim/bin/arcsim-bleeding --arch /afs/inf.ed.ac.uk/group/project/arc_tools/arcsim/svn/etc/encore-bleeding.arc --isa /afs/inf.ed.ac.uk/group/project/arc_tools/arcsim/svn/etc/encore.isa -tcvX --emt" --with-libcycles
 
 # Build the benchmarks
 echo "Building..."
