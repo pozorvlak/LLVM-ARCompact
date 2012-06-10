@@ -2900,8 +2900,8 @@ namespace {
     }
 
     virtual const char *getVAListDeclaration() const {
-      // TODO: Implement.
-      return "";
+      // TODO: Check what this should ACTUALLY be.
+      return "typedef void* __builtin_va_list;";
     }
 
     virtual const char *getClobbers() const {
