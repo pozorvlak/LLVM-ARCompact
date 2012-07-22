@@ -111,7 +111,9 @@ void ARCompactRegisterInfo::eliminateFrameIndex(MachineBasicBlock::iterator II,
       MI.getOperand(i).ChangeToRegister(ARC::FP, false);
       MI.getOperand(i+1).ChangeToImmediate(Offset);
     } else {
-      llvm_unreachable("Offset immediate too small or too big!");
+      MI.getOperand(i).ChangeToRegister(ARC::FP, false);
+      MI.getOperand(i+1).ChangeToImmediate(255);
+      //llvm_unreachable("Offset immediate too small or too big!");
     }
   } else {
     // For now, just default to converting the frame index.

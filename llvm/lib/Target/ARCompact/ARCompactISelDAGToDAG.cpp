@@ -40,6 +40,7 @@ public:
   // Complex Pattern Selectors.
   // TODO: Merge these into just one or two and select between them in-code.
   bool SelectADDRri(SDValue N, SDValue &Base, SDValue &Offset);
+  bool SelectADDRri2(SDValue N, SDValue &Base, SDValue &Offset);
   bool SelectADDRli(SDValue N, SDValue &AddrOut);
   bool SelectADDRrr(SDValue N, SDValue &R1, SDValue &R2);
   bool SelectADDRrli(SDValue N, SDValue &R1, SDValue &Offset);
@@ -61,6 +62,8 @@ private:
 /// offset Offset, or returns false if unable to process the memory address.
 bool ARCompactDAGToDAGISel::SelectADDRri(SDValue Addr, SDValue &Base,
     SDValue &Offset) {
+  //dbgs() << "SelectADDRri\n";
+  //Addr.getNode()->dump();
   // If Addr is a frame index, the offset will be computed later, in
   // eliminateFrameIndex.
   if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
@@ -76,18 +79,17 @@ bool ARCompactDAGToDAGISel::SelectADDRri(SDValue Addr, SDValue &Base,
       // well absorb the addition into the address.
       if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) {
         uint64_t CVal = CN->getZExtValue();
-        // If shifting left,right 32 bits (64 - 32) doesnt change CVal's value,
-        // it is an 32-bit integer.
-        if (((CVal << 32) >> 32) == CVal) {
+        // If shifting left,right 55 bits (64 - 9) doesnt change CVal's value,
+        // it is an 9-bit integer. Cannot use 32-bit case as we may have a limm
+        // source operand.
+        if (((CVal << 9) >> 9) == CVal) {
           SDValue N0 = Addr.getOperand(0);
-          // TODO: Is using a 32-bit limm actually better, or should we
-          // restrict to only the 9-bit simm case?
           if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N0)) {
             Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
           }
           else {
             Base = N0;
-           }
+          }
 
           Offset = CurDAG->getTargetConstant(CVal, MVT::i32);
           return true;
@@ -97,8 +99,11 @@ bool ARCompactDAGToDAGISel::SelectADDRri(SDValue Addr, SDValue &Base,
     case ARCISD::Wrapper:
       // The address is wrapped in a specific ARCompact wrapper, meaning it
       // might be a GlobalAddress, or ??.
+      //dbgs() << "Wrapper.\n";
       SDValue N0 = Addr.getOperand(0);
+      //N0.getNode()->dump();
       if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
+        //dbgs() << "Its a global.\n";
         Base = CurDAG->getTargetGlobalAddress(G->getGlobal(),
             Addr.getDebugLoc(), MVT::i32, G->getOffset());
         Offset = CurDAG->getTargetConstant(0, MVT::i32);
@@ -118,8 +123,76 @@ bool ARCompactDAGToDAGISel::SelectADDRri(SDValue Addr, SDValue &Base,
 /// return false if unable to process the memory address (e.g. if
 /// it is not a limm address).
 bool ARCompactDAGToDAGISel::SelectADDRli(SDValue Addr, SDValue &AddrOut) {
+  //dbgs() << "SelectADDRrli\n";
+  //Addr.getNode()->dump();
+
+  // Handle some special cases for the source of the memory address.
+  switch (Addr.getOpcode()) {
+    case ARCISD::Wrapper:
+      // The address is wrapped in a specific ARCompact wrapper, meaning it
+      // might be a GlobalAddress, or ??.
+      //dbgs() << "Wrapper.\n";
+      SDValue N0 = Addr.getOperand(0);
+      //N0.getNode()->dump();
+      if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(N0)) {
+        //dbgs() << "Its a global.\n";
+        AddrOut = CurDAG->getTargetGlobalAddress(G->getGlobal(),
+            Addr.getDebugLoc(), MVT::i32, G->getOffset());
+        return true;
+      }
+      break;
+  }
+
   return false;
 }
+
+/// Version of SelectADDRri that can't do a global address as the LHS is a LI.
+bool ARCompactDAGToDAGISel::SelectADDRri2(SDValue Addr, SDValue &Base,
+    SDValue &Offset) {
+  //dbgs() << "SelectADDRri2\n";
+  //Addr.getNode()->dump();
+  // If Addr is a frame index, the offset will be computed later, in
+  // eliminateFrameIndex.
+  if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(Addr)) {
+    Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
+    Offset = CurDAG->getTargetConstant(0, MVT::i32);
+    return true;
+  }
+
+  // Handle some special cases for the source of the memory address.
+  switch (Addr.getOpcode()) {
+    case ISD::ADD:
+      // If the address is calculated from an addition computation, we may as
+      // well absorb the addition into the address.
+      if (ConstantSDNode *CN = dyn_cast<ConstantSDNode>(Addr.getOperand(1))) {
+        uint64_t CVal = CN->getZExtValue();
+        // If shifting left,right 55 bits (64 - 9) doesnt change CVal's value,
+        // it is an 9-bit integer. Cannot use 32-bit case as we may have a limm
+        // source operand.
+        if (((CVal << 9) >> 9) == CVal) {
+          SDValue N0 = Addr.getOperand(0);
+          if (FrameIndexSDNode *FIN = dyn_cast<FrameIndexSDNode>(N0)) {
+            Base = CurDAG->getTargetFrameIndex(FIN->getIndex(), MVT::i32);
+          }
+          else {
+            Base = N0;
+          }
+
+          Offset = CurDAG->getTargetConstant(CVal, MVT::i32);
+          return true;
+        }
+      }
+      break;
+    case ARCISD::Wrapper:
+      return false;
+  }
+
+  // Default to an offset of 0 and a Base of Addr.
+  Base = Addr;
+  Offset = CurDAG->getTargetConstant(0, MVT::i32);
+  return true;
+}
+
 
 
 /// Sets R1 and R2 to the values of the memory address operands, or

@@ -25,6 +25,7 @@
 #include "llvm/CodeGen/SelectionDAG.h"
 #include "llvm/CodeGen/TargetLoweringObjectFileImpl.h"
 #include "llvm/ADT/VectorExtras.h"
+#include "llvm/Support/Debug.h"
 #include "llvm/Support/ErrorHandling.h"
 using namespace llvm;
 
@@ -32,6 +33,7 @@ using namespace llvm;
 
 ARCompactTargetLowering::ARCompactTargetLowering(TargetMachine &TM)
     : TargetLowering(TM, new TargetLoweringObjectFileELF()) {
+  //DEBUG(dbgs() << "ARCompactTargetLowering::ARCompactTargetLowering()\n");
   // Set up the register classes.
   addRegisterClass(MVT::i32, ARC::CPURegsRegisterClass);
 
@@ -65,9 +67,25 @@ ARCompactTargetLowering::ARCompactTargetLowering(TargetMachine &TM)
 
   // SETCC is expanded to ???
   setOperationAction(ISD::SETCC,          MVT::i32,   Expand);
+
+  // SREM is expanded to ???
+  setOperationAction(ISD::SREM,           MVT::i32,   Expand);
+
+  // SDIV is expanded to ???
+  setOperationAction(ISD::SDIV,           MVT::i32,   Expand);
+
+  // SDIVREM is expanded to ???
+  setOperationAction(ISD::SDIVREM,        MVT::i32,   Expand);
+
+  // Expand UDIV too.
+  setOperationAction(ISD::UDIV,           MVT::i32,   Expand);
+
+  // UDIVREM
+  setOperationAction(ISD::UDIVREM,        MVT::i32,   Expand);
 }
 
 const char* ARCompactTargetLowering::getTargetNodeName(unsigned Opcode) const {
+  //DEBUG(dbgs() << "ARCompactTargetLowering::getTargetNodeName()\n");
   switch (Opcode) {
     case ARCISD::CALL:        return "ARCISD::CALL";
     case ARCISD::CMP:         return "ARCISD::CMP";
@@ -81,11 +99,12 @@ const char* ARCompactTargetLowering::getTargetNodeName(unsigned Opcode) const {
 
 SDValue ARCompactTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
     const {
+  //DEBUG(dbgs() << "ARCompactTargetLowering::LowerOperation()\n");
   switch (Op.getOpcode()) {
     case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
     case ISD::BR_CC:            return LowerBR_CC(Op, DAG);
     case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
-    default:
+      default:
       assert(0 && "Unimplemented operation!");
       return SDValue();
   }
@@ -95,6 +114,9 @@ SDValue ARCompactTargetLowering::LowerFormalArguments(SDValue Chain,
     CallingConv::ID CallConv, bool isVarArg,
     const SmallVectorImpl<ISD::InputArg> &Ins, DebugLoc dl, SelectionDAG &DAG,
     SmallVectorImpl<SDValue> &InVals) const {
+  //DEBUG(dbgs() << "ARCompactTargetLowering::LowerFormalArguments()\n");
+  //DEBUG(dbgs() << "isVarArg? " << isVarArg << "\n");
+  //DEBUG(Chain.getNode()->dump());
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
 
@@ -151,6 +173,7 @@ SDValue ARCompactTargetLowering::LowerReturn(SDValue Chain,
     const SmallVectorImpl<ISD::OutputArg> &Outs,
     const SmallVectorImpl<SDValue> &OutVals, DebugLoc dl, SelectionDAG &DAG)
     const {
+  //DEBUG(dbgs() << "ARCompactTargetLowering::LowerReturn()\n");
   MachineFunction &MF = DAG.getMachineFunction();
 
   // CCValAssign - represent the assignment of the return value to locations.
@@ -204,6 +227,9 @@ SDValue ARCompactTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     const SmallVectorImpl<SDValue> &OutVals,
     const SmallVectorImpl<ISD::InputArg> &Ins,
     DebugLoc dl, SelectionDAG &DAG, SmallVectorImpl<SDValue> &InVals) const {
+  //DEBUG(dbgs() << "ARCompactTargetLowering::LowerCall()\n");
+  //DEBUG(Chain.getNode()->dump());
+  //DEBUG(dbgs() << "isVarArg? " << isVarArg << "\n");
   // ARCompact does not support tail calls yet.
   isTailCall = false;
 
@@ -229,10 +255,12 @@ SDValue ARCompactTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     CCValAssign &VA = ArgLocs[i];
 
     SDValue Arg = OutVals[i];
+    //DEBUG(Arg.getNode()->dump());
 
     // Promote the value if needed.
     switch (VA.getLocInfo()) {
       case CCValAssign::Full:
+        //DEBUG(dbgs() << "Full.\n");
         break;
       case CCValAssign::SExt:
         Arg = DAG.getNode(ISD::SIGN_EXTEND, dl, VA.getLocVT(), Arg);
@@ -250,10 +278,13 @@ SDValue ARCompactTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
     // Arguments that can be passed in a register must be kept in the
     // RegsToPass vector.
     if (VA.isRegLoc()) {
+      //DEBUG(dbgs() << "RegLoc!\n");
       RegsToPass.push_back(std::make_pair(VA.getLocReg(), Arg));
     } else {
+      //DEBUG(dbgs() << "Else!\n");
       // Sanity check.
       assert(VA.isMemLoc());
+      //llvm_unreachable("Mem");
 
       // Get the stack pointer if needed.
       if (StackPtr.getNode() == 0) {
@@ -332,6 +363,7 @@ SDValue ARCompactTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
     const SmallVectorImpl<ISD::InputArg> &Ins,
     DebugLoc dl, SelectionDAG &DAG,
     SmallVectorImpl<SDValue> &InVals) const {
+  //DEBUG(dbgs() << "ARCompactTargetLowering::LowerCallResult()\n");
   // Assign locations to each value returned by this call.
   SmallVector<CCValAssign, 16> RVLocs;
   CCState CCInfo(CallConv, isVarArg,
@@ -351,6 +383,7 @@ SDValue ARCompactTargetLowering::LowerCallResult(SDValue Chain, SDValue InFlag,
 }
 
 EVT ARCompactTargetLowering::getSetCCResultType(EVT VT) const {
+  //DEBUG(dbgs() << "ARCompactTargetLowering::getSetCCResultType()\n");
   return MVT::i32;
 }
 
@@ -358,6 +391,7 @@ EVT ARCompactTargetLowering::getSetCCResultType(EVT VT) const {
 // ISD::CondCode.
 static SDValue EmitCMP(SDValue &LHS, SDValue &RHS, SDValue &TargetCC,
     ISD::CondCode CC, DebugLoc dl, SelectionDAG &DAG) {
+  //DEBUG(dbgs() << "ARCompactTargetLowering::EmitCMP()\n");
   assert(!LHS.getValueType().isFloatingPoint() && "We don't do FP");
 
   // From the ISD::CondCode documentation:
@@ -457,6 +491,7 @@ SDValue ARCompactTargetLowering::LowerSELECT_CC(SDValue Op, SelectionDAG &DAG)
 
 SDValue ARCompactTargetLowering::LowerGlobalAddress(SDValue Op,
     SelectionDAG &DAG) const {
+  //DEBUG(dbgs() << "ARCompactTargetLowering::LowerGlobalAddress()\n");
   const GlobalValue *GV = cast<GlobalAddressSDNode>(Op)->getGlobal();
   int64_t Offset = cast<GlobalAddressSDNode>(Op)->getOffset();
 

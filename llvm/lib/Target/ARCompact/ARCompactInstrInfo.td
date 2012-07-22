@@ -77,9 +77,10 @@ def simm12 : PatLeaf<(imm), [{ return isInt<12>(N->getSExtValue()); }]>;
 def limm32 : PatLeaf<(imm), [{ return isInt<32>(N->getSExtValue()); }]>;
 
 // Patterns which match addressing modes.
-def ADDRri : ComplexPattern<i32, 2, "SelectADDRri", [frameindex], []>;
-def ADDRli : ComplexPattern<i32, 1, "SelectADDRli", [frameindex], []>;
-def ADDRrr : ComplexPattern<i32, 2, "SelectADDRrr", [frameindex], []>;
+def ADDRri : ComplexPattern<i32, 2, "SelectADDRri",  [frameindex], []>;
+def ADDRri2 : ComplexPattern<i32, 2, "SelectADDRri2", [frameindex], []>;
+def ADDRli : ComplexPattern<i32, 1, "SelectADDRli",  [frameindex], []>;
+def ADDRrr : ComplexPattern<i32, 2, "SelectADDRrr",  [frameindex], []>;
 def ADDRrli : ComplexPattern<i32, 2, "SelectADDRrli", [frameindex], []>;
 def ADDRlir : ComplexPattern<i32, 2, "SelectADDRlir", [frameindex], []>;
 
@@ -640,12 +641,22 @@ let isAsCheapAsAMove = 1 in {
 }
 
 // MPY - Page 263.
-//    Performs a signed 32-bit by 32-bit multiple of the source operands
+//    Performs a signed 32-bit by 32-bit multiply of the source operands
 //    and places the least significant bits of the result in the destination
 //    register.
+// TODO: Support other formats than register, register -> register.
 def MPYrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, CPURegs:$src2),
                     "mpy $dst,$src1,$src2",
                     [(set CPURegs:$dst, (mul CPURegs:$src1, CPURegs:$src2))]>;
+
+// MPYHU - Page 267.
+//    Performs an unisnged 32-bit by 32-bit multiply of the source operands
+//    and places the most significant bits of the result in the destination
+//    register.
+// TODO: Support other formats than register, register -> register.
+def MPYHUrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, CPURegs:$src2),
+                     "mpyhu $dst,$src1,$src2",
+                     [(set CPURegs:$dst, (mulhu CPURegs:$src1, CPURegs:$src2))]>;
 
 // NEG - page 275.
 //    The source value is subtracted from 0 and the result placed in the
@@ -718,7 +729,7 @@ def STrli : Pseudo<(outs), (ins MEMli:$addr, CPURegs:$src),
 
 def STliri : Pseudo<(outs), (ins MEMri:$addr, i32imm:$src),
                     "st $src,$addr",
-                    [(store limm32:$src, ADDRri:$addr)]>;
+                    [(store limm32:$src, ADDRri2:$addr)]>;
 
 // Truncuated versions of STrri.
 // TODO: Add STrli, STliri.
