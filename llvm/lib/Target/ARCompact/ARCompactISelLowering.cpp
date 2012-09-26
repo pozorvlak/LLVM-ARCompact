@@ -13,6 +13,7 @@
 //===----------------------------------------------------------------------===//
 
 #include "ARCompactISelLowering.h"
+#include "ARCompactMachineFunctionInfo.h"
 #include "ARCompactTargetMachine.h"
 #include "llvm/DerivedTypes.h"
 #include "llvm/Function.h"
@@ -82,6 +83,13 @@ ARCompactTargetLowering::ARCompactTargetLowering(TargetMachine &TM)
 
   // UDIVREM
   setOperationAction(ISD::UDIVREM,        MVT::i32,   Expand);
+
+  // Variadic function-related stuff.
+  setOperationAction(ISD::VASTART,        MVT::Other, Custom);
+  setOperationAction(ISD::VAARG,          MVT::Other, Expand);
+  setOperationAction(ISD::VACOPY,         MVT::Other, Expand);
+  setOperationAction(ISD::VAEND,          MVT::Other, Expand);
+
 }
 
 const char* ARCompactTargetLowering::getTargetNodeName(unsigned Opcode) const {
@@ -104,11 +112,32 @@ SDValue ARCompactTargetLowering::LowerOperation(SDValue Op, SelectionDAG &DAG)
     case ISD::GlobalAddress:    return LowerGlobalAddress(Op, DAG);
     case ISD::BR_CC:            return LowerBR_CC(Op, DAG);
     case ISD::SELECT_CC:        return LowerSELECT_CC(Op, DAG);
+    case ISD::VASTART:          return LowerVASTART(Op, DAG);
       default:
       assert(0 && "Unimplemented operation!");
       return SDValue();
   }
 }
+
+SDValue ARCompactTargetLowering::LowerVASTART(SDValue Op, SelectionDAG &DAG) const {
+  MachineFunction &MF = DAG.getMachineFunction();
+  ARCompactFunctionInfo *FuncInfo = MF.getInfo<ARCompactFunctionInfo>();
+
+  // vastart just stores the address of the VarArgsFrameIndex slot into the
+  // memory location argument.
+  DebugLoc dl = Op.getDebugLoc();
+  EVT PtrVT = DAG.getTargetLoweringInfo().getPointerTy();
+  SDValue FR = DAG.getFrameIndex(FuncInfo->getVarArgsFrameIndex(), PtrVT);
+  const Value *SV = cast<SrcValueSDNode>(Op.getOperand(2))->getValue();
+  return DAG.getStore(Op.getOperand(0), dl, FR, Op.getOperand(1),
+                      MachinePointerInfo(SV), false, false, 0);
+}
+
+
+static const unsigned ArgumentRegisters[] = {
+  ARC::R0, ARC::R1, ARC::R2, ARC::R3,
+  ARC::R4, ARC::R5, ARC::R6, ARC::R7
+};
 
 SDValue ARCompactTargetLowering::LowerFormalArguments(SDValue Chain,
     CallingConv::ID CallConv, bool isVarArg,
@@ -119,15 +148,13 @@ SDValue ARCompactTargetLowering::LowerFormalArguments(SDValue Chain,
   //DEBUG(Chain.getNode()->dump());
   MachineFunction &MF = DAG.getMachineFunction();
   MachineFrameInfo *MFI = MF.getFrameInfo();
+  ARCompactFunctionInfo *AFI = MF.getInfo<ARCompactFunctionInfo>();
 
   // Assign locations to all of the incoming arguments.
   SmallVector<CCValAssign, 16> ArgLocs;
   CCState CCInfo(CallConv, isVarArg, DAG.getMachineFunction(),
      getTargetMachine(), ArgLocs, *DAG.getContext());
   CCInfo.AnalyzeFormalArguments(Ins, CC_ARCompact32);
-
-  // TODO: Handle varargs.
-  assert(!isVarArg && "Varargs not supported yet");
 
   // Push the arguments onto the InVals vector.
   SDValue ArgValue;
@@ -165,6 +192,64 @@ SDValue ARCompactTargetLowering::LowerFormalArguments(SDValue Chain,
     }
   }
 
+  // varargs
+  if (isVarArg) {
+    // For this, we need to declare any varargs that can fit into the unused
+    // parameter registers (register r0-r7.) This involves updating the 
+    // ARCompactFunctionInfo with the size of the space needed (num_regs * 4),
+    // and sticking the values into the registers. The remaining varargs are
+    // the problem of the caller to deal with.
+    
+    // Work out how many varargs we can fit into registers.
+    unsigned FirstFreeIndex = CCInfo.getFirstUnallocated(ArgumentRegisters,
+        sizeof(ArgumentRegisters) / sizeof(ArgumentRegisters[0]));
+    unsigned NumFreeRegisters = (FirstFreeIndex <= 7) ? 
+        (8 - FirstFreeIndex) : 0;
+    //dbgs() << "NumFreeRegisters: " << NumFreeRegisters << "\n";
+
+    // We must make sure to preserve the alignment.
+    unsigned Align = MF.getTarget().getFrameLowering()->getStackAlignment();
+    unsigned VARegSize = NumFreeRegisters * 4;
+    unsigned VARegSaveSize = (VARegSize + Align - 1) & ~(Align - 1);
+    //dbgs() << "VARegSize: " << VARegSize << "\n";
+    //dbgs() << "VARegSaveSize: " << VARegSaveSize << "\n";
+
+    // Update the ARCompactFunctionInfo with the details about the varargs.
+    AFI->setVarArgsRegSaveSize(VARegSaveSize);
+    int64_t offset = CCInfo.getNextStackOffset() + VARegSaveSize - VARegSize;
+    // Adjust the offset for the fact that the save locations starts at least 8
+    // above the FP, not at the FP.
+    offset += 8;
+    //dbgs() << "offset: " << offset << "\n";
+    AFI->setVarArgsFrameIndex(MFI->CreateFixedObject(VARegSaveSize,
+        offset, false));
+
+    // Create a frame index for the varargs area.
+    SDValue FIN = DAG.getFrameIndex(AFI->getVarArgsFrameIndex(),
+        getPointerTy());
+
+    // Now place as many varargs into the registers as we can.
+    SmallVector<SDValue, 8> MemOps;
+    for (; FirstFreeIndex < 8; ++FirstFreeIndex) {
+      TargetRegisterClass *RC = ARC::CPURegsRegisterClass;
+      unsigned VReg = MF.addLiveIn(ArgumentRegisters[FirstFreeIndex], RC);
+      SDValue Val = DAG.getCopyFromReg(Chain, dl, VReg, MVT::i32);
+      SDValue Store = DAG.getStore(Val.getValue(1), dl, Val, FIN, 
+          MachinePointerInfo::getFixedStack(AFI->getVarArgsFrameIndex()),
+          false, false, 0);
+      MemOps.push_back(Store);
+      // Increment the frame pointer location.
+      FIN = DAG.getNode(ISD::ADD, dl, getPointerTy(), FIN,
+          DAG.getConstant(4, getPointerTy()));
+    }
+
+    // If we added any varargs, update the chain.
+    if (!MemOps.empty()) {
+      Chain = DAG.getNode(ISD::TokenFactor, dl, MVT::Other,
+          &MemOps[0], MemOps.size());
+    }
+  }
+ 
   return Chain;
 }
 
@@ -321,8 +406,7 @@ SDValue ARCompactTargetLowering::LowerCall(SDValue Chain, SDValue Callee,
   // Likewise ExternalSymbol -> TargetExternalSymbol.
   if (GlobalAddressSDNode *G = dyn_cast<GlobalAddressSDNode>(Callee)) {
     Callee = DAG.getTargetGlobalAddress(G->getGlobal(), dl, MVT::i32);
-  }
-  else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee)) {
+  } else if (ExternalSymbolSDNode *E = dyn_cast<ExternalSymbolSDNode>(Callee)) {
     Callee = DAG.getTargetExternalSymbol(E->getSymbol(), MVT::i32);
   }
 

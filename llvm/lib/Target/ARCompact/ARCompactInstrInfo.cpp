@@ -313,7 +313,7 @@ bool ARCompactInstrInfo::DefinesPredicate(MachineInstr *MI,
 bool ARCompactInstrInfo::isProfitableToIfCvt(MachineBasicBlock &MBB,
     unsigned NumCycles, unsigned ExtraPredCycles,
     const BranchProbability &Probability) const {
-  MBB.dump();
+  //MBB.dump();
   if (!NumCycles) {
     return false;
   }

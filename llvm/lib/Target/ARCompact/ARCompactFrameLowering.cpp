@@ -13,6 +13,7 @@
 
 #include "ARCompactFrameLowering.h"
 #include "ARCompactInstrInfo.h"
+#include "ARCompactMachineFunctionInfo.h"
 #include "llvm/Function.h"
 #include "llvm/CodeGen/MachineFrameInfo.h"
 #include "llvm/CodeGen/MachineFunction.h"
@@ -25,6 +26,8 @@
 #include "llvm/Metadata.h"
 #include "llvm/LLVMContext.h"
 #include "llvm/ADT/ArrayRef.h"
+
+#include "llvm/Support/Debug.h"
 
 #include <string>
 
@@ -96,15 +99,15 @@ static void EmitComment(MachineBasicBlock &MBB,
 }
 
 void ARCompactFrameLowering::emitPrologue(MachineFunction &MF) const {
+  //dbgs() << "Prologue\n";
   MachineBasicBlock &MBB = MF.front();
   MachineBasicBlock::iterator MBBI = MBB.begin();
   MachineFrameInfo  *MFI = MF.getFrameInfo();
+  ARCompactFunctionInfo *AFI = MF.getInfo<ARCompactFunctionInfo>();
   const ARCompactInstrInfo &TII =
       *static_cast<const ARCompactInstrInfo*>(MF.getTarget().getInstrInfo());
 
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
-
-  assert(!MFI->hasVarSizedObjects() && "Variadic functions not supported yet!");
 
   // Start of prologue comment.
   EmitComment(MBB, MBBI, dl, TII, "PROLOGUE START");
@@ -113,7 +116,11 @@ void ARCompactFrameLowering::emitPrologue(MachineFunction &MF) const {
   unsigned int NumBytes = MFI->getStackSize();
   NumBytes = (NumBytes + 3) & ~3;
 
-  // TODO: Allocate space for variadic function arguments.
+  unsigned VARegSaveSize = AFI->getVarArgsRegSaveSize();
+  if (VARegSaveSize) {
+    BuildMI(MBB, MBBI, dl, TII.get(ARC::SUBrsi), ARC::SP).addReg(ARC::SP)
+        .addImm(VARegSaveSize);
+  }
 
   // Save the return address register, if necessary
   if (MFI->adjustsStack()) {
@@ -147,12 +154,11 @@ void ARCompactFrameLowering::emitEpilogue(MachineFunction &MF,
   /* This code adapted from GCC and other llvm backends. */
   MachineBasicBlock::iterator MBBI = MBB.getLastNonDebugInstr();
   MachineFrameInfo  *MFI = MF.getFrameInfo();
+  ARCompactFunctionInfo *AFI = MF.getInfo<ARCompactFunctionInfo>();
   const ARCompactInstrInfo &TII =
       *static_cast<const ARCompactInstrInfo*>(MF.getTarget().getInstrInfo());
 
   DebugLoc dl = MBBI != MBB.end() ? MBBI->getDebugLoc() : DebugLoc();
-
-  assert(!MFI->hasVarSizedObjects() && "Variadic functions not supported yet!");
 
   // Make sure we are putting the epilogue in the right place.
   assert(MBBI->getDesc().isReturn() &&
@@ -182,6 +188,12 @@ void ARCompactFrameLowering::emitEpilogue(MachineFunction &MF,
   if (MFI->adjustsStack()) {
     BuildMI(MBB, MBBI, dl, TII.get(ARC::LDri_ab)).addReg(ARC::BLINK)
         .addReg(ARC::SP).addImm(UNITS_PER_WORD);
+  }
+
+  unsigned VARegSaveSize = AFI->getVarArgsRegSaveSize();
+  if (VARegSaveSize) {
+    BuildMI(MBB, MBBI, dl, TII.get(ARC::ADDrsi), ARC::SP).addReg(ARC::SP)
+        .addImm(VARegSaveSize);
   }
 
   // End of epilogue comment.
