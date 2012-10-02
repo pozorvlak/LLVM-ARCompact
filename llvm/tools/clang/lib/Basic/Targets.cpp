@@ -2873,13 +2873,13 @@ namespace {
       // Thread-local supported = false.
       TLSSupported = false;
 
-      IntWidth = 16; IntAlign = 16;
+      IntWidth = 32; IntAlign = 32;
       LongWidth = 32; LongLongWidth = 64;
-      PointerWidth = 16; PointerAlign = 16;
+      PointerWidth = 32; PointerAlign = 32;
       SizeType = UnsignedInt;
       IntMaxType = SignedLong;
       UIntMaxType = UnsignedLong;
-      IntPtrType = SignedShort;
+      IntPtrType = SignedInt;
       PtrDiffType = SignedInt;
       SigAtomicType = SignedLong;
       DescriptionString = "e-p:32:32:32";
