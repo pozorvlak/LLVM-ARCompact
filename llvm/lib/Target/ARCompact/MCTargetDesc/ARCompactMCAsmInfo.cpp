@@ -17,6 +17,7 @@
 using namespace llvm;
 
 ARCompactELFMCAsmInfo::ARCompactELFMCAsmInfo(const Target &T, StringRef TT) {
+  UsesELFSectionDirectiveForBSS = true;
   IsLittleEndian = true;
   Triple TheTriple(TT);
 
