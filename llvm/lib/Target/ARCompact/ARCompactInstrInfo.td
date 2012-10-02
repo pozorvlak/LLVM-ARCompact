@@ -436,12 +436,12 @@ let isCall = 1 in {
   let Defs = [R0, R1, R2, R3, R4, R5, R6, R7, T0, T1, T2, T3, T4, STATUS32],
       Uses = [SP] in {
     // Unconditional jump.
-    // TODO: Are both versions (i32imm and CPURegs) needed? Why?
     def BLi : Pseudo<(outs), (ins i32imm:$dst, variable_ops),
                        "bl $dst",
                        [(ARCcall imm:$dst)]>;
-    def BLr : Pseudo<(outs), (ins CPURegs:$dst, variable_ops),
-                       "bl $dst",
+    // Branch and link can't handle a register source. Jump can.
+    def JLr : Pseudo<(outs), (ins CPURegs:$dst, variable_ops),
+                       "jl [$dst]",
                        [(ARCcall CPURegs:$dst)]>;
   } // Defs = [STATUS32], Uses = [SP]
 } // isCall
@@ -650,13 +650,22 @@ def MPYrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, CPURegs:$src2),
                     [(set CPURegs:$dst, (mul CPURegs:$src1, CPURegs:$src2))]>;
 
 // MPYHU - Page 267.
-//    Performs an unisnged 32-bit by 32-bit multiply of the source operands
+//    Performs an unsinged 32-bit by 32-bit multiply of the source operands
 //    and places the most significant bits of the result in the destination
 //    register.
 // TODO: Support other formats than register, register -> register.
 def MPYHUrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, CPURegs:$src2),
                      "mpyhu $dst,$src1,$src2",
                      [(set CPURegs:$dst, (mulhu CPURegs:$src1, CPURegs:$src2))]>;
+
+// MPYH - Page 265.
+//    Performs a signed 32-bit by 32-bit multiple of the source operands and
+//    places the most significant bits of the result in the destination 
+//    register.
+// TODO: Support other formats than register, register -> register.
+def MPYHrr : Pseudo<(outs CPURegs:$dst), (ins CPURegs:$src1, CPURegs:$src2),
+                    "mpyh $dst,$src1,$src2",
+                    [(set CPURegs:$dst, (mulhs CPURegs:$src1, CPURegs:$src2))]>;
 
 // NEG - page 275.
 //    The source value is subtracted from 0 and the result placed in the
