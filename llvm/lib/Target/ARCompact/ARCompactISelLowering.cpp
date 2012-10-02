@@ -90,6 +90,14 @@ ARCompactTargetLowering::ARCompactTargetLowering(TargetMachine &TM)
   setOperationAction(ISD::VACOPY,         MVT::Other, Expand);
   setOperationAction(ISD::VAEND,          MVT::Other, Expand);
 
+  setOperationAction(ISD::UREM,           MVT::i32,   Expand);
+
+  setOperationAction(ISD::ROTL,           MVT::i32,   Expand);
+  setOperationAction(ISD::ROTR,           MVT::i32,   Expand);
+
+  setOperationAction(ISD::UMUL_LOHI,      MVT::i32,   Expand);
+
+  setOperationAction(ISD::BSWAP,          MVT::i32,   Expand);
 }
 
 const char* ARCompactTargetLowering::getTargetNodeName(unsigned Opcode) const {
